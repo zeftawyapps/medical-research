@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/patient_record_brd.dart';
-import '../../theme/app_theme.dart';
 import 'procedure_catalog_dialog.dart';
 
 /// Tab widget displaying registered operations for the selected patient
@@ -30,23 +29,32 @@ class OperationsListTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final secondaryColor = colorScheme.secondary;
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
+
     if (selectedPatient == null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.person_outline, size: 48, color: Colors.grey),
+            Icon(Icons.person_outline, size: 48, color: textSecondary),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Please select or search a patient first.',
-              style: TextStyle(color: Colors.grey),
+              style: TextStyle(color: textSecondary),
             ),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: onSearchPatient,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                foregroundColor: Colors.white,
+                backgroundColor: primaryColor,
+                foregroundColor: colorScheme.onPrimary,
               ),
               child: const Text('Search Patients'),
             ),
@@ -67,10 +75,10 @@ class OperationsListTab extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: isDark ? AppTheme.darkCard : Colors.white,
+              color: cardBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isDark ? AppTheme.darkBorder : Colors.grey.shade200,
+                color: borderColor,
               ),
             ),
             child: Column(
@@ -82,12 +90,12 @@ class OperationsListTab extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withValues(alpha: 0.12),
+                        color: primaryColor.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.healing_outlined,
-                        color: Colors.teal,
+                        color: primaryColor,
                         size: 20,
                       ),
                     ),
@@ -95,9 +103,10 @@ class OperationsListTab extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Operations History (${patientOperations.length})',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: textPrimary,
                         ),
                       ),
                     ),
@@ -109,7 +118,7 @@ class OperationsListTab extends StatelessWidget {
                   'Registered surgical records for $patientName',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                    color: textSecondary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -120,8 +129,8 @@ class OperationsListTab extends StatelessWidget {
                   children: [
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal.shade700,
-                        foregroundColor: Colors.white,
+                        backgroundColor: primaryColor,
+                        foregroundColor: colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 9,
@@ -142,9 +151,9 @@ class OperationsListTab extends StatelessWidget {
                     ),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.teal,
+                        foregroundColor: primaryColor,
                         side: BorderSide(
-                          color: isDark ? Colors.teal.shade700 : Colors.teal.shade300,
+                          color: primaryColor.withValues(alpha: 0.5),
                         ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -177,10 +186,10 @@ class OperationsListTab extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkCard : Colors.white,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? AppTheme.darkBorder : Colors.grey.shade200,
+                  color: borderColor,
                 ),
               ),
               child: Column(
@@ -192,22 +201,23 @@ class OperationsListTab extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.teal.withValues(alpha: 0.12),
+                          color: primaryColor.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.medical_information_outlined,
                           size: 20,
-                          color: Colors.teal,
+                          color: primaryColor,
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'No Operations Recorded for $patientName',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
+                            color: textPrimary,
                           ),
                         ),
                       ),
@@ -218,7 +228,7 @@ class OperationsListTab extends StatelessWidget {
                   Text(
                     'No surgical records found. Click below to add an operation for this patient:',
                     style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.grey.shade600,
+                      color: textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -230,8 +240,8 @@ class OperationsListTab extends StatelessWidget {
                     children: [
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal.shade700,
-                          foregroundColor: Colors.white,
+                          backgroundColor: primaryColor,
+                          foregroundColor: colorScheme.onPrimary,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 9,
@@ -252,9 +262,9 @@ class OperationsListTab extends StatelessWidget {
                       ),
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.teal,
+                          foregroundColor: primaryColor,
                           side: BorderSide(
-                            color: isDark ? Colors.teal.shade700 : Colors.teal.shade300,
+                            color: primaryColor.withValues(alpha: 0.5),
                           ),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
@@ -302,20 +312,18 @@ class OperationsListTab extends StatelessWidget {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? Colors.teal.withValues(alpha: isDark ? 0.18 : 0.05)
-                          : (isDark ? AppTheme.darkCard : Colors.white),
+                          ? primaryColor.withValues(alpha: isDark ? 0.18 : 0.08)
+                          : cardBg,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
-                            ? Colors.teal
-                            : (isDark
-                                ? AppTheme.darkBorder
-                                : Colors.grey.shade300),
+                            ? primaryColor
+                            : borderColor,
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
+                          color: Colors.black.withValues(alpha: isDark ? 0.0 : 0.02),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -331,12 +339,12 @@ class OperationsListTab extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.teal.withValues(alpha: 0.15),
+                                color: primaryColor.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.healing,
-                                color: Colors.teal,
+                                color: primaryColor,
                                 size: 18,
                               ),
                             ),
@@ -347,7 +355,7 @@ class OperationsListTab extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: isSelected ? Colors.teal : null,
+                                  color: isSelected ? primaryColor : textPrimary,
                                 ),
                               ),
                             ),
@@ -358,13 +366,13 @@ class OperationsListTab extends StatelessWidget {
                                   vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.teal,
+                                  color: primaryColor,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'ACTIVE',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: colorScheme.onPrimary,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -391,9 +399,7 @@ class OperationsListTab extends StatelessWidget {
                                     : Colors.grey.shade100,
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: isDark
-                                      ? Colors.white12
-                                      : Colors.grey.shade300,
+                                  color: borderColor,
                                 ),
                               ),
                               child: Row(
@@ -402,9 +408,7 @@ class OperationsListTab extends StatelessWidget {
                                   Icon(
                                     Icons.calendar_today_outlined,
                                     size: 11,
-                                    color: isDark
-                                        ? Colors.white70
-                                        : Colors.grey.shade700,
+                                    color: textSecondary,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -412,9 +416,7 @@ class OperationsListTab extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.black87,
+                                      color: textPrimary,
                                     ),
                                   ),
                                 ],
@@ -425,9 +427,7 @@ class OperationsListTab extends StatelessWidget {
                                 op.diagnosisDetails,
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : Colors.grey.shade700,
+                                  color: textSecondary,
                                 ),
                               ),
                           ],
@@ -435,7 +435,7 @@ class OperationsListTab extends StatelessWidget {
                         const SizedBox(height: 10),
                         Divider(
                           height: 1,
-                          color: isDark ? Colors.white10 : Colors.grey.shade200,
+                          color: borderColor,
                         ),
                         const SizedBox(height: 10),
 
@@ -446,8 +446,8 @@ class OperationsListTab extends StatelessWidget {
                           children: [
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.teal.shade700,
-                                foregroundColor: Colors.white,
+                                backgroundColor: primaryColor,
+                                foregroundColor: colorScheme.onPrimary,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 14,
                                   vertical: 8,
@@ -475,8 +475,8 @@ class OperationsListTab extends StatelessWidget {
                             ),
                             OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.indigo,
-                                side: BorderSide(color: Colors.indigo.shade300),
+                                foregroundColor: secondaryColor,
+                                side: BorderSide(color: secondaryColor.withValues(alpha: 0.5)),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 14,
                                   vertical: 8,

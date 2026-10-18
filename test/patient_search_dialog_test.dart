@@ -3,6 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:medecat_research/models/patient_model.dart';
 import 'package:medecat_research/screens/sections/patient_search_dialog.dart';
 
+/// ============================================================================
+/// 🧪 PatientSearchDialog Test Suite (اختبارات نافذة البحث واختيار المرضى)
+/// 
+/// تغطي هذه المجموعة:
+/// 1. التحقق من خلو نافذة البحث [PatientSearchDialog] من أي تجاوز في الأبعاد (Overflow-free) على شاشات الهواتف الصغيرة (360x640).
+/// 2. اختبار الفلترة الفورية حسب الاسم ورقم السجل الطبي (MRN) ورقم الهاتف.
+/// 3. اختبار تكيف النافذة مع لوحة المفاتيح الافتراضية (On-screen Keyboard / ViewInsets) دون حدوث RenderFlex Overflow.
+/// 4. التحقق من كفاءة الأداء وسرعة الاستجابة عند التعامل مع قوائم مرضى ضخمة (> 1000 مريض).
+/// ============================================================================
+
 void main() {
   final samplePatients = [
     PatientModel(
@@ -40,7 +50,12 @@ void main() {
     ),
   ];
 
-  testWidgets('PatientSearchDialog renders without overflow on small screens and filters correctly', (WidgetTester tester) async {
+  group('PatientSearchDialog - UI & Performance Tests', () {
+    /// --------------------------------------------------------------------------
+    /// 📋 Test 1:
+    /// التحقق من رسم النافذة على الشاشات الصغيرة واختبار الفلترة الفورية
+    /// --------------------------------------------------------------------------
+    testWidgets('PatientSearchDialog renders without overflow on small screens and filters correctly', (WidgetTester tester) async {
     // Simulate a small screen (e.g., 360x640 mobile phone)
     tester.view.physicalSize = const Size(360, 640);
     tester.view.devicePixelRatio = 1.0;
@@ -201,5 +216,6 @@ void main() {
 
     expect(find.text('Patient 444'), findsOneWidget);
     expect(find.text('Showing 1 of 500 patients'), findsOneWidget);
+  });
   });
 }

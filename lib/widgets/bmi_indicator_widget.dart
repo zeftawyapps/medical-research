@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../utils/bmi_calculator.dart';
 
-/// Clinical widget displaying Body Mass Index (BMI) and color-coded status
+/// Clinical widget displaying Body Mass Index (BMI) with WHO categorization,
+/// smart height normalization (handles cm e.g. 175 & m e.g. 1.75), and visual gauge.
 class BmiIndicatorWidget extends StatelessWidget {
   final double? weightKg;
   final double? heightM;
@@ -11,13 +13,7 @@ class BmiIndicatorWidget extends StatelessWidget {
     required this.heightM,
   });
 
-  double? get bmi {
-    if (weightKg == null || heightM == null || heightM! <= 0 || weightKg! <= 0) {
-      return null;
-    }
-    final val = weightKg! / (heightM! * heightM!);
-    return double.parse(val.toStringAsFixed(2));
-  }
+  double? get bmi => BmiCalculator.calculate(weightKg, heightM);
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +36,7 @@ class BmiIndicatorWidget extends StatelessWidget {
             SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Enter weight (kg) and height (m) to calculate BMI automatically',
+                'Enter weight (kg) and height (m or cm) to calculate BMI automatically',
                 style: TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ),
@@ -49,105 +45,173 @@ class BmiIndicatorWidget extends StatelessWidget {
       );
     }
 
-    // Determine category and color
-    String categoryName;
-    Color categoryColor;
-    IconData categoryIcon;
+    final categoryName = BmiCalculator.getCategory(val);
+    final categoryColor = BmiCalculator.getCategoryColor(val);
+    final categoryIcon = BmiCalculator.getCategoryIcon(val);
+    final normHeight = BmiCalculator.normalizeHeightM(heightM);
 
-    if (val < 18.5) {
-      categoryName = 'Underweight';
-      categoryColor = Colors.blue;
-      categoryIcon = Icons.arrow_downward_rounded;
-    } else if (val < 25.0) {
-      categoryName = 'Normal Weight';
-      categoryColor = Colors.green.shade600;
-      categoryIcon = Icons.check_circle_outline_rounded;
-    } else if (val < 30.0) {
-      categoryName = 'Overweight';
-      categoryColor = Colors.orange.shade700;
-      categoryIcon = Icons.trending_up_rounded;
-    } else if (val < 35.0) {
-      categoryName = 'Obesity Class I';
-      categoryColor = Colors.deepOrange.shade600;
-      categoryIcon = Icons.warning_amber_rounded;
-    } else {
-      categoryName = 'Severe Obesity (Class II / III)';
-      categoryColor = Colors.red.shade700;
-      categoryIcon = Icons.health_and_safety_rounded;
-    }
+    final bool enteredAsCm = (heightM != null && heightM! > 3.0);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: categoryColor.withValues(alpha: isDark ? 0.15 : 0.08),
+        color: categoryColor.withValues(alpha: isDark ? 0.14 : 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: categoryColor.withValues(alpha: 0.4)),
+        border: Border.all(color: categoryColor.withValues(alpha: 0.4), width: 1.2),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: categoryColor.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(categoryIcon, color: categoryColor, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: categoryColor.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(categoryIcon, color: categoryColor, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'BMI: ',
-                      style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                    Row(
+                      children: [
+                        const Text(
+                          'BMI: ',
+                          style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          val.toStringAsFixed(1),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: categoryColor,
+                          ),
+                        ),
+                        const Text(
+                          ' kg/m²',
+                          style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      val.toStringAsFixed(1),
+                      categoryName,
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.bold,
                         color: categoryColor,
                       ),
                     ),
-                    const Text(
-                      ' kg/m²',
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  categoryName,
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: categoryColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'WHO AUTO',
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: categoryColor,
+                    color: Colors.white,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
                   ),
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: categoryColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'AUTO',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
               ),
-            ),
+            ],
           ),
+          const SizedBox(height: 10),
+          // Subtitle breakdown info
+          Row(
+            children: [
+              Text(
+                'Weight: ${weightKg?.toStringAsFixed(1) ?? '--'} kg  •  Height: ${enteredAsCm ? '${heightM!.toStringAsFixed(0)} cm (${normHeight?.toStringAsFixed(2)} m)' : '${normHeight?.toStringAsFixed(2) ?? '--'} m'}',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Visual WHO BMI Scale Bar
+          _buildBmiScaleBar(val, isDark),
         ],
       ),
+    );
+  }
+
+  Widget _buildBmiScaleBar(double bmi, bool isDark) {
+    // Categories: Underweight (<18.5), Normal (18.5-24.9), Overweight (25-29.9), Obese I (30-34.9), Obese II/III (>=35)
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 18,
+                child: Container(
+                  height: 6,
+                  color: Colors.blue.shade400,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                flex: 65,
+                child: Container(
+                  height: 6,
+                  color: Colors.green.shade500,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                flex: 50,
+                child: Container(
+                  height: 6,
+                  color: Colors.orange.shade500,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                flex: 50,
+                child: Container(
+                  height: 6,
+                  color: Colors.deepOrange.shade500,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Expanded(
+                flex: 60,
+                child: Container(
+                  height: 6,
+                  color: Colors.red.shade600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('<18.5', style: TextStyle(fontSize: 9, color: Colors.grey.shade600)),
+            Text('18.5-24.9', style: TextStyle(fontSize: 9, color: Colors.grey.shade600)),
+            Text('25.0-29.9', style: TextStyle(fontSize: 9, color: Colors.grey.shade600)),
+            Text('30.0-34.9', style: TextStyle(fontSize: 9, color: Colors.grey.shade600)),
+            Text('≥35.0', style: TextStyle(fontSize: 9, color: Colors.grey.shade600)),
+          ],
+        ),
+      ],
     );
   }
 }

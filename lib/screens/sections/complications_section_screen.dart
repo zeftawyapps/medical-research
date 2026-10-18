@@ -182,13 +182,13 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
     );
   }
 
-  Color _getGradeColor(String grade) {
+  Color _getGradeColor(String grade, Color primaryColor, Color secondaryColor) {
     if (grade.contains('Grade I') && !grade.contains('Grade II') && !grade.contains('Grade IV') && !grade.contains('Grade V')) {
-      return AppTheme.primaryTeal;
+      return primaryColor;
     } else if (grade.contains('Grade II')) {
       return AppTheme.alertAmber;
     } else if (grade.contains('Grade III')) {
-      return AppTheme.accentPurple;
+      return secondaryColor;
     } else {
       return AppTheme.alertRed;
     }
@@ -197,8 +197,14 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
     final isMobile = ResponsiveLayout.isMobile(context);
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
 
     final filteredComplications = provider.complications.where((c) {
       if (_gradeFilter != 'All' && !c.grade.contains(_gradeFilter)) return false;
@@ -233,7 +239,7 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
                       style: GoogleFonts.inter(
                         fontSize: isMobile ? 18 : 22,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -241,7 +247,7 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
                       'Postoperative adverse events by POD day and Clavien-Dindo grades.',
                       style: GoogleFonts.inter(
                         fontSize: isMobile ? 11.5 : 13,
-                        color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
@@ -300,11 +306,11 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
                     onSelected: (val) {
                       if (val) setState(() => _gradeFilter = g);
                     },
-                    selectedColor: AppTheme.primaryCyan,
+                    selectedColor: primaryColor.withValues(alpha: 0.25),
                     labelStyle: GoogleFonts.inter(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.black : (isDark ? Colors.white70 : Colors.black87),
+                      color: isSelected ? primaryColor : textSecondary,
                     ),
                   ),
                 );
@@ -318,7 +324,7 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 10),
@@ -333,13 +339,13 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
             ...filteredComplications.map((c) {
               final op = provider.operations.where((o) => o.operationId == c.operationId).firstOrNull;
               final patient = op != null ? provider.patients.where((pt) => pt.patientId == op.patientId).firstOrNull : null;
-              final color = _getGradeColor(c.grade);
+              final color = _getGradeColor(c.grade, primaryColor, colorScheme.secondary);
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: EdgeInsets.all(isMobile ? 12 : 16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkCard : Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: color.withValues(alpha: 0.3)),
                 ),
@@ -389,7 +395,7 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
                                 Expanded(
                                   child: Text(
                                     patient.name,
-                                    style: GoogleFonts.inter(fontSize: 11, color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+                                    style: GoogleFonts.inter(fontSize: 11, color: textSecondary),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -399,7 +405,7 @@ class _ComplicationsSectionScreenState extends State<ComplicationsSectionScreen>
                           const SizedBox(height: 4),
                           Text(
                             'Management: ${c.management}',
-                            style: GoogleFonts.inter(fontSize: isMobile ? 12 : 13, fontWeight: FontWeight.w500, color: isDark ? Colors.white : AppTheme.lightTextPrimary),
+                            style: GoogleFonts.inter(fontSize: isMobile ? 12 : 13, fontWeight: FontWeight.w500, color: textPrimary),
                           ),
                         ],
                       ),

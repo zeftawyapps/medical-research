@@ -5,9 +5,22 @@ import 'package:medecat_research/models/patient_record_brd.dart';
 import 'package:medecat_research/services/garment_preferences_service.dart';
 import 'package:medecat_research/widgets/conditional_garment_section_widget.dart';
 
+/// ============================================================================
+/// 🧪 Garment Section & Compression Preferences Test Suite (اختبارات مشدات الضغط وقسم Intra-Op)
+/// 
+/// تغطي هذه المجموعة:
+/// 1. التحقق من هيكل بيانات ونموذج [IntraOpModel] وتخزين تفاصيل مشد الضغط (Area/Type & Brand/Model) وتوافقه العكسي.
+/// 2. اختبار واجهة المستخدم التفاعلية المشروطة [ConditionalGarmentSectionWidget] (Switching on/off, Dropdowns, Add Custom Dialog).
+/// 3. اختبار خدمة حفظ واسترجاع الأنواع والماركات المخصصة في [GarmentPreferencesService] عبر SharedPreferences.
+/// ============================================================================
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  /// --------------------------------------------------------------------------
+  /// 📦 Group 1: Model & Schema Verification
+  /// فحص النموذج وتحويل الحقول وتوافق البيانات
+  /// --------------------------------------------------------------------------
   group('Garment Section - Model & Schema Verification', () {
     test('IntraOpModel serialization and garment_info structure', () {
       final intraOp = IntraOpModel(

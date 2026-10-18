@@ -3,13 +3,12 @@ import 'package:flutter/material.dart';
 import '../models/patient_record_brd.dart';
 import '../services/database/clinical_repository.dart';
 import '../services/garment_preferences_service.dart';
-import '../theme/app_theme.dart';
 import 'add_operation_screen.dart';
 import 'sections/add_patient_dialog.dart' as patient_dialog;
 import 'sections/clinical_expandable_section.dart';
 import 'sections/operations_list_tab.dart';
 import 'sections/patient_profile_header.dart';
-import 'sections/patient_search_dialog.dart';
+import 'sections/patient_search_dialog.dart' as patient_search;
 import 'sections/post_op_tab.dart';
 import 'package:JoDija_tamplites/JoDija_tamplites.dart';
 
@@ -22,8 +21,10 @@ class ClinicalCaseManagementScreen extends StatefulWidget {
 
   /// Pending patient ID to select if navigation happens before or during mounting
   static String? pendingPatientId;
+
   /// Pending operation ID to select upon arrival
   static String? pendingOperationId;
+
   /// Flag to automatically trigger Add Patient dialog on arrival
   static bool autoOpenAddPatientDialog = false;
 
@@ -42,12 +43,19 @@ class ClinicalCaseManagementScreen extends StatefulWidget {
       );
     }
     try {
-      final router = Provider.of<AppShellRouterProvider>(context, listen: false);
+      final router = Provider.of<AppShellRouterProvider>(
+        context,
+        listen: false,
+      );
       try {
         (router as dynamic).handleItemTapByPath(context, '/surgical_hub');
       } catch (_) {
         try {
-          (router as dynamic).handleItemTapByPath(context, '/surgical_hub', null);
+          (router as dynamic).handleItemTapByPath(
+            context,
+            '/surgical_hub',
+            null,
+          );
         } catch (_) {}
       }
     } catch (_) {
@@ -61,12 +69,19 @@ class ClinicalCaseManagementScreen extends StatefulWidget {
   static void navigateAndOpenAddPatientDialog(BuildContext context) {
     autoOpenAddPatientDialog = true;
     try {
-      final router = Provider.of<AppShellRouterProvider>(context, listen: false);
+      final router = Provider.of<AppShellRouterProvider>(
+        context,
+        listen: false,
+      );
       try {
         (router as dynamic).handleItemTapByPath(context, '/surgical_hub');
       } catch (_) {
         try {
-          (router as dynamic).handleItemTapByPath(context, '/surgical_hub', null);
+          (router as dynamic).handleItemTapByPath(
+            context,
+            '/surgical_hub',
+            null,
+          );
         } catch (_) {}
       }
     } catch (_) {
@@ -81,6 +96,31 @@ class ClinicalCaseManagementScreen extends StatefulWidget {
         caseManagementKey.currentState!.openAddPatientDialog();
       }
     });
+  }
+
+  /// Navigates to the Home / Clinical Query screen (/clinical_query)
+  static void navigateToHome(BuildContext context) {
+    try {
+      final router = Provider.of<AppShellRouterProvider>(
+        context,
+        listen: false,
+      );
+      try {
+        (router as dynamic).handleItemTapByPath(context, '/clinical_query');
+      } catch (_) {
+        try {
+          (router as dynamic).handleItemTapByPath(
+            context,
+            '/clinical_query',
+            null,
+          );
+        } catch (_) {}
+      }
+    } catch (_) {
+      try {
+        context.go('/clinical_query');
+      } catch (_) {}
+    }
   }
 
   const ClinicalCaseManagementScreen({super.key});
@@ -132,8 +172,8 @@ class ClinicalCaseManagementScreenState
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _hbController = TextEditingController();
-  final TextEditingController _t3Controller = TextEditingController();
-  final TextEditingController _t4Controller = TextEditingController();
+  final TextEditingController _tshController = TextEditingController();
+  final TextEditingController _hba1cController = TextEditingController();
   List<String> _scanPictures = [];
   List<String> _preOpPictures = [];
 
@@ -167,8 +207,8 @@ class ClinicalCaseManagementScreenState
     _weightController.dispose();
     _heightController.dispose();
     _hbController.dispose();
-    _t3Controller.dispose();
-    _t4Controller.dispose();
+    _tshController.dispose();
+    _hba1cController.dispose();
     _opNotesController.dispose();
     _fatVolumeController.dispose();
     _garmentTypeController.dispose();
@@ -294,7 +334,10 @@ class ClinicalCaseManagementScreenState
   }
 
   /// Public method to select patient by ID programmatically from external screens
-  Future<void> selectPatientById(String patientId, {String? operationId}) async {
+  Future<void> selectPatientById(
+    String patientId, {
+    String? operationId,
+  }) async {
     await _loadInitialData();
     final matching = _patients.where((p) => p.patientId == patientId);
     if (matching.isNotEmpty) {
@@ -351,8 +394,8 @@ class ClinicalCaseManagementScreenState
       _weightController.text = preOp.weightKg?.toString() ?? '';
       _heightController.text = preOp.heightM?.toString() ?? '';
       _hbController.text = preOp.hemoglobin?.toString() ?? '';
-      _t3Controller.text = preOp.t3?.toString() ?? '';
-      _t4Controller.text = preOp.t4?.toString() ?? '';
+      _tshController.text = preOp.tsh?.toString() ?? (preOp.t3?.toString() ?? '');
+      _hba1cController.text = preOp.hba1c?.toString() ?? (preOp.t4?.toString() ?? '');
       _scanPictures = List<String>.from(preOp.scanPictures);
       _preOpPictures = List<String>.from(preOp.preOpPictures);
     } else {
@@ -433,8 +476,8 @@ class ClinicalCaseManagementScreenState
     _weightController.clear();
     _heightController.clear();
     _hbController.clear();
-    _t3Controller.clear();
-    _t4Controller.clear();
+    _tshController.clear();
+    _hba1cController.clear();
     _scanPictures = [];
     _preOpPictures = [];
   }
@@ -454,6 +497,34 @@ class ClinicalCaseManagementScreenState
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _openAddOperationScreen();
         });
+      },
+    );
+  }
+
+  // Edit existing patient details dialog
+  void openEditPatientDialog() {
+    if (_selectedPatient == null) return;
+    patient_dialog.openAddPatientDialog(
+      context: context,
+      repository: _repository,
+      existingPatients: _patients,
+      initialPatient: _selectedPatient,
+      onPatientAdded: (savedPatient) async {
+        await _loadInitialData();
+        setState(() {
+          _selectedPatient = savedPatient;
+        });
+        await _loadOperationsForPatient(savedPatient.patientId);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Patient "${savedPatient.name}" updated successfully.'),
+              backgroundColor: Colors.teal,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       },
     );
   }
@@ -570,8 +641,8 @@ class ClinicalCaseManagementScreenState
       weightKg: double.tryParse(_weightController.text.trim()),
       heightM: double.tryParse(_heightController.text.trim()),
       hemoglobin: double.tryParse(_hbController.text.trim()),
-      t3: double.tryParse(_t3Controller.text.trim()),
-      t4: double.tryParse(_t4Controller.text.trim()),
+      tsh: double.tryParse(_tshController.text.trim()),
+      hba1c: double.tryParse(_hba1cController.text.trim()),
       scanPictures: _scanPictures,
       preOpPictures: _preOpPictures,
     );
@@ -632,11 +703,13 @@ class ClinicalCaseManagementScreenState
             children: [
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 8),
-              Text('Pre-Op and operative details saved successfully!'),
+              Expanded(
+                child: Text('Pre-Op and operative details saved successfully!'),
+              ),
             ],
           ),
           backgroundColor: Colors.teal.shade700,
-          duration: const Duration(milliseconds: 700),
+          duration: const Duration(milliseconds: 1200),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -668,11 +741,13 @@ class ClinicalCaseManagementScreenState
             children: [
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 8),
-              Text('Post-operative follow-up and pictures saved successfully!'),
+              Expanded(
+                child: Text('Post-operative follow-up and pictures saved successfully!'),
+              ),
             ],
           ),
           backgroundColor: Colors.teal.shade700,
-          duration: const Duration(milliseconds: 700),
+          duration: const Duration(milliseconds: 1200),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -766,9 +841,86 @@ class ClinicalCaseManagementScreenState
     }
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.darkBackground
-          : const Color(0xFFF7F9FC),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: const Text(
+          'Clinical Case Management',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Return to Home / Research Query',
+            icon: const Icon(Icons.home_rounded),
+            onPressed: () => ClinicalCaseManagementScreen.navigateToHome(context),
+          ),
+          IconButton(
+            tooltip: 'Find / Search Patient',
+            icon: const Icon(Icons.person_search_rounded),
+            onPressed: openPatientSearchDialog,
+          ),
+          IconButton(
+            tooltip: 'Register New Patient',
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+            onPressed: openAddPatientDialog,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            tooltip: 'More Options',
+            onSelected: (val) {
+              if (val == 'search_patient') {
+                openPatientSearchDialog();
+              } else if (val == 'new_patient') {
+                openAddPatientDialog();
+              } else if (val == 'refresh') {
+                _loadInitialData();
+              } else if (val == 'reset') {
+                confirmClearDatabase();
+              }
+            },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'new_patient',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.person_add_alt_1_rounded,
+                      color: Colors.teal,
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Text('New Patient'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'refresh',
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh_rounded, size: 20),
+                    SizedBox(width: 8),
+                    Text('Refresh Data'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'reset',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delete_forever_outlined,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Text('Reset Database', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           controller: _scrollController,
@@ -782,9 +934,10 @@ class ClinicalCaseManagementScreenState
                   selectedPatient: _selectedPatient,
                   hasPatients: _patients.isNotEmpty,
                   isDark: isDark,
-                  onFindPatient: _openPatientSearchDialog,
+                  onFindPatient: openPatientSearchDialog,
                   onNewPatient: openAddPatientDialog,
-                  onChangePatient: _openPatientSearchDialog,
+                  onChangePatient: openPatientSearchDialog,
+                  onEditPatient: openEditPatientDialog,
                   onAddOperation: _openAddOperationScreen,
                 ),
               ),
@@ -808,7 +961,7 @@ class ClinicalCaseManagementScreenState
                   patientOperations: _patientOperations,
                   selectedOperation: _selectedOperation,
                   isDark: isDark,
-                  onSearchPatient: _openPatientSearchDialog,
+                  onSearchPatient: openPatientSearchDialog,
                   onAddOperation: _openAddOperationScreen,
                   onSelectOperation: _selectOperation,
                   onExpandSection: _expandSection,
@@ -844,8 +997,8 @@ class ClinicalCaseManagementScreenState
                   weightController: _weightController,
                   heightController: _heightController,
                   hbController: _hbController,
-                  t3Controller: _t3Controller,
-                  t4Controller: _t4Controller,
+                  tshController: _tshController,
+                  hba1cController: _hba1cController,
                   scanPictures: _scanPictures,
                   onScanPicturesChanged: (val) => _scanPictures = val,
                   preOpPictures: _preOpPictures,
@@ -922,8 +1075,8 @@ class ClinicalCaseManagementScreenState
   }
 
   // Quick Patient Search Dialog
-  void _openPatientSearchDialog() {
-    openPatientSearchDialog(
+  void openPatientSearchDialog() {
+    patient_search.openPatientSearchDialog(
       context: context,
       patients: _patients,
       selectedPatient: _selectedPatient,

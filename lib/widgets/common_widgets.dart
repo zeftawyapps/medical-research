@@ -8,7 +8,7 @@ class MetricCard extends StatelessWidget {
   final String value;
   final String subtitle;
   final IconData icon;
-  final Color accentColor;
+  final Color? accentColor;
   final String? trendText;
   final bool isTrendPositive;
 
@@ -18,27 +18,34 @@ class MetricCard extends StatelessWidget {
     required this.value,
     required this.subtitle,
     required this.icon,
-    this.accentColor = AppTheme.primaryCyan,
+    this.accentColor,
     this.trendText,
     this.isTrendPositive = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryAccent = accentColor ?? colorScheme.primary;
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCard : Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          color: borderColor,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withValues(alpha: isDark ? 0.08 : 0.06),
+            color: primaryAccent.withValues(alpha: isDark ? 0.08 : 0.05),
             blurRadius: 12,
             offset: const Offset(0, 3),
           ),
@@ -59,7 +66,7 @@ class MetricCard extends StatelessWidget {
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                    color: textSecondary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -69,10 +76,10 @@ class MetricCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.14),
+                  color: primaryAccent.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: accentColor, size: 16),
+                child: Icon(icon, color: primaryAccent, size: 16),
               ),
             ],
           ),
@@ -85,7 +92,7 @@ class MetricCard extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                color: textPrimary,
               ),
             ),
           ),
@@ -98,7 +105,7 @@ class MetricCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     decoration: BoxDecoration(
-                      color: (isTrendPositive ? AppTheme.primaryTeal : AppTheme.alertRed)
+                      color: (isTrendPositive ? colorScheme.primary : AppTheme.alertRed)
                           .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
@@ -108,7 +115,7 @@ class MetricCard extends StatelessWidget {
                         Icon(
                           isTrendPositive ? Icons.trending_up : Icons.trending_down,
                           size: 11,
-                          color: isTrendPositive ? AppTheme.primaryTeal : AppTheme.alertRed,
+                          color: isTrendPositive ? colorScheme.primary : AppTheme.alertRed,
                         ),
                         const SizedBox(width: 3),
                         Text(
@@ -116,7 +123,7 @@ class MetricCard extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
-                            color: isTrendPositive ? AppTheme.primaryTeal : AppTheme.alertRed,
+                            color: isTrendPositive ? colorScheme.primary : AppTheme.alertRed,
                           ),
                         ),
                       ],
@@ -130,7 +137,7 @@ class MetricCard extends StatelessWidget {
                   subtitle,
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                    color: textSecondary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -257,14 +264,19 @@ class CustomSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCard : Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          color: borderColor,
           width: 1,
         ),
       ),
@@ -273,13 +285,14 @@ class CustomSearchBar extends StatelessWidget {
         onChanged: onChanged,
         style: GoogleFonts.inter(
           fontSize: 14,
-          color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+          color: textPrimary,
         ),
         decoration: InputDecoration(
           hintText: hint,
+          hintStyle: TextStyle(color: textSecondary),
           prefixIcon: Icon(
             Icons.search_rounded,
-            color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+            color: textSecondary,
             size: 20,
           ),
           suffixIcon: controller != null && controller!.text.isNotEmpty
@@ -316,7 +329,10 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -331,7 +347,7 @@ class SectionHeader extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                  color: textPrimary,
                   letterSpacing: -0.5,
                 ),
               ),
@@ -341,7 +357,7 @@ class SectionHeader extends StatelessWidget {
                   subtitle!,
                   style: GoogleFonts.inter(
                     fontSize: 12.5,
-                    color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                    color: textSecondary,
                   ),
                 ),
               ],
@@ -367,7 +383,7 @@ class SectionHeader extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                      color: textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -377,7 +393,7 @@ class SectionHeader extends StatelessWidget {
                       subtitle!,
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
@@ -411,7 +427,10 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
 
     return Center(
       child: Padding(
@@ -422,10 +441,10 @@ class EmptyStateWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primaryCyan.withValues(alpha: 0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 48, color: AppTheme.primaryCyan),
+              child: Icon(icon, size: 48, color: colorScheme.primary),
             ),
             const SizedBox(height: 18),
             Text(
@@ -433,7 +452,7 @@ class EmptyStateWidget extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                color: textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -442,7 +461,7 @@ class EmptyStateWidget extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                color: textSecondary,
               ),
             ),
             if (action != null) ...[

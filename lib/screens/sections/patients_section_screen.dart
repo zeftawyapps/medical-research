@@ -28,9 +28,24 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
   }
 
   void _showAddPatientModal(BuildContext context, ResearchProvider provider) {
-    final mrnController = TextEditingController(
-      text: 'MRN-2026-${1000 + DateTime.now().millisecond}',
-    );
+    final year = DateTime.now().year;
+    int maxNum = 0;
+    final regex = RegExp(r'MRN-\d{4}-(\d+)', caseSensitive: false);
+    for (final p in provider.patients) {
+      final m = regex.firstMatch(p.medicalRecordNumber);
+      if (m != null) {
+        final n = int.tryParse(m.group(1) ?? '0') ?? 0;
+        if (n > maxNum) maxNum = n;
+      }
+    }
+    int candidateIndex = maxNum + 1;
+    if (candidateIndex <= provider.patients.length) candidateIndex = provider.patients.length + 1;
+    String candidateMrn = 'MRN-$year-${candidateIndex.toString().padLeft(4, '0')}';
+    while (provider.patients.any((p) => p.medicalRecordNumber.trim().toUpperCase() == candidateMrn.toUpperCase())) {
+      candidateIndex++;
+      candidateMrn = 'MRN-$year-${candidateIndex.toString().padLeft(4, '0')}';
+    }
+    final mrnController = TextEditingController(text: candidateMrn);
     final nameController = TextEditingController();
     int calculateAge(DateTime dob) {
       final now = DateTime.now();
@@ -66,11 +81,14 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
       });
     }
 
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
     showAdaptiveFormModal(
       context: context,
       title: 'Add New Patient',
       icon: Icons.person_add_alt_1_rounded,
-      iconColor: AppTheme.primaryCyan,
+      iconColor: primaryColor,
       saveButtonText: 'Save Patient',
       formBuilder: (ctx, setModalState) {
         Widget buildDobField() {
@@ -89,11 +107,11 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
             child: IgnorePointer(
               child: TextField(
                 controller: dobController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Birth Date (DOB) *',
                   hintText: 'YYYY-MM-DD',
-                  prefixIcon: Icon(Icons.cake_outlined, color: AppTheme.primaryCyan, size: 18),
-                  suffixIcon: Icon(Icons.calendar_today_rounded, size: 16),
+                  prefixIcon: Icon(Icons.cake_outlined, color: primaryColor, size: 18),
+                  suffixIcon: const Icon(Icons.calendar_today_rounded, size: 16),
                 ),
               ),
             ),
@@ -104,11 +122,11 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
           return TextField(
             controller: ageController,
             readOnly: true,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Age (Calculated)',
               hintText: 'Auto',
               suffixText: 'yrs',
-              prefixIcon: Icon(Icons.access_time_rounded, color: AppTheme.primaryCyan, size: 18),
+              prefixIcon: Icon(Icons.access_time_rounded, color: primaryColor, size: 18),
             ),
           );
         }
@@ -183,15 +201,15 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
               ),
               DropdownMenuItem(
                 value: 'ASA II',
-                child: Text('ASA II (Mild Disease)'),
+                child: Text('ASA II (Mild Systemic Disease)'),
               ),
               DropdownMenuItem(
                 value: 'ASA III',
-                child: Text('ASA III (Severe Disease)'),
+                child: Text('ASA III (Severe Systemic Disease)'),
               ),
               DropdownMenuItem(
                 value: 'ASA IV',
-                child: Text('ASA IV (Life Threat)'),
+                child: Text('ASA IV (Life-threatening Disease)'),
               ),
             ],
             onChanged: (val) {
@@ -202,118 +220,135 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final maxWidth = constraints.maxWidth;
-            final isSmall = maxWidth < 480;
-            final halfWidth = isSmall ? maxWidth : (maxWidth - 12) / 2;
+            final isLandscapeKeyboard =
+                MediaQuery.of(context).orientation == Orientation.landscape &&
+                MediaQuery.of(context).viewInsets.bottom > 0;
+            final isMultiColumn =
+                constraints.maxWidth >= 480 && !isLandscapeKeyboard;
+
+            if (isMultiColumn) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: mrnController,
+                          decoration: const InputDecoration(
+                            labelText: 'MRN (Auto Sequential) *',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Full Name *',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: buildDobField()),
+                      const SizedBox(width: 12),
+                      Expanded(child: buildAgeField()),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: buildGenderField()),
+                      const SizedBox(width: 12),
+                      Expanded(child: buildBloodGroupField()),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CountryPickerField(
+                          selectedCountry: country,
+                          onCountryChanged: (val) {
+                            setModalState(() => country = val);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: buildPhoneField()),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: buildBmiField()),
+                      const SizedBox(width: 12),
+                      Expanded(child: buildAsaField()),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: notesController,
+                    maxLines: 2,
+                    scrollPadding: ResponsiveLayout.textFieldScrollPadding(
+                      context,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: 'Clinical Baseline Notes',
+                    ),
+                  ),
+                ],
+              );
+            }
 
             return Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    SizedBox(
-                      width: halfWidth,
-                      child: TextField(
-                        controller: mrnController,
-                        readOnly: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Patient ID (MRN) *',
-                          helperText: 'Auto-generated unique record (Read-Only)',
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: halfWidth,
-                      child: TextField(
-                        controller: nameController,
-                        scrollPadding: ResponsiveLayout.textFieldScrollPadding(context),
-                        decoration: const InputDecoration(
-                          labelText: 'Patient Full Name *',
-                          hintText: 'e.g. Robert Henderson',
-                        ),
-                      ),
-                    ),
-                  ],
+                TextField(
+                  controller: mrnController,
+                  decoration: const InputDecoration(
+                    labelText: 'Medical Record Number (MRN) *',
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    SizedBox(
-                      width: isSmall ? maxWidth : (maxWidth - 12) * 0.6,
-                      child: buildDobField(),
-                    ),
-                    SizedBox(
-                      width: isSmall ? maxWidth : (maxWidth - 12) * 0.4,
-                      child: buildAgeField(),
-                    ),
-                  ],
+                const SizedBox(height: 10),
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Full Name *'),
                 ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    SizedBox(
-                      width: halfWidth,
-                      child: buildGenderField(),
-                    ),
-                    SizedBox(
-                      width: halfWidth,
-                      child: buildBloodGroupField(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    SizedBox(
-                      width: halfWidth,
-                      child: buildPhoneField(),
-                    ),
-                    SizedBox(
-                      width: halfWidth,
-                      child: buildBmiField(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    SizedBox(
-                      width: maxWidth,
-                      child: buildAsaField(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                buildDobField(),
+                const SizedBox(height: 10),
+                buildAgeField(),
+                const SizedBox(height: 10),
+                buildGenderField(),
+                const SizedBox(height: 10),
+                buildBloodGroupField(),
+                const SizedBox(height: 10),
                 CountryPickerField(
                   selectedCountry: country,
-                  onCountryChanged: (val) => setModalState(() => country = val),
-                  labelText: 'Country (Optional)',
-                  hintText: 'Select Country (Optional)',
+                  onCountryChanged: (val) {
+                    setModalState(() => country = val);
+                  },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                buildPhoneField(),
+                const SizedBox(height: 10),
+                buildBmiField(),
+                const SizedBox(height: 10),
+                buildAsaField(),
+                const SizedBox(height: 10),
                 TextField(
                   controller: notesController,
                   maxLines: 2,
-                  scrollPadding: ResponsiveLayout.textFieldScrollPadding(context),
+                  scrollPadding: ResponsiveLayout.textFieldScrollPadding(
+                    context,
+                  ),
                   decoration: const InputDecoration(
-                    labelText: 'Notes (Optional)',
-                    hintText: 'Patient remarks, allergies, clinical notes...',
-                    prefixIcon: Icon(
-                      Icons.note_alt_outlined,
-                      color: AppTheme.primaryCyan,
-                      size: 18,
-                    ),
+                    labelText: 'Clinical Baseline Notes',
                   ),
                 ),
               ],
@@ -322,28 +357,48 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
         );
       },
       onSave: () async {
-        if (mrnController.text.isNotEmpty && nameController.text.isNotEmpty) {
-          await provider.addPatient(
-            mrn: mrnController.text.trim(),
-            name: nameController.text.trim(),
-            dateOfBirth: selectedDob != null
-                ? DateFormat('yyyy-MM-dd').format(selectedDob!)
-                : dobController.text.trim(),
-            age: int.tryParse(ageController.text.trim()) ?? 0,
-            gender: gender,
-            bloodGroup: bloodGroup,
-            phone: phoneController.text.trim(),
-            country: country,
-            notes: notesController.text.trim(),
-            bmi: bmiController.text.trim(),
-            asaScore: asaScore,
+        if (mrnController.text.trim().isEmpty ||
+            nameController.text.trim().isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please provide both Patient Name and MRN.'),
+            ),
           );
-          if (context.mounted) {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Patient ${nameController.text} saved ')),
-            );
-          }
+          return;
+        }
+
+        final parsedAge =
+            int.tryParse(ageController.text) ??
+            calculateAge(selectedDob ?? DateTime(1990, 1, 1));
+        final finalDob =
+            selectedDob != null
+                ? DateFormat('yyyy-MM-dd').format(selectedDob!)
+                : dobController.text.trim();
+
+        await provider.addPatient(
+          mrn: mrnController.text.trim(),
+          name: nameController.text.trim(),
+          age: parsedAge,
+          gender: gender,
+          bloodGroup: bloodGroup,
+          country: country ?? '',
+          phone: phoneController.text.trim(),
+          notes: notesController.text.trim(),
+          dateOfBirth: finalDob,
+          bmi: bmiController.text.trim().isNotEmpty ? bmiController.text.trim() : '24.5',
+          asaScore: asaScore,
+        );
+
+        if (context.mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Patient "${nameController.text.trim()}" successfully registered.',
+              ),
+              backgroundColor: primaryColor,
+            ),
+          );
         }
       },
     );
@@ -352,16 +407,20 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
     final isMobile = ResponsiveLayout.isMobile(context);
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
 
     final filteredPatients = provider.patients.where((p) {
       if (_query.isEmpty) return true;
       final q = _query.toLowerCase();
       return p.name.toLowerCase().contains(q) ||
           p.medicalRecordNumber.toLowerCase().contains(q) ||
-          p.country.toLowerCase().contains(q) ||
-          p.notes.toLowerCase().contains(q) ||
           p.gender.toLowerCase().contains(q) ||
           p.phone.toLowerCase().contains(q) ||
           p.bloodGroup.toLowerCase().contains(q);
@@ -389,9 +448,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                       style: GoogleFonts.inter(
                         fontSize: isMobile ? 18 : 22,
                         fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? Colors.white
-                            : AppTheme.lightTextPrimary,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -399,9 +456,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                       'Manage patient demographics, unique MRN, and baseline profiles.',
                       style: GoogleFonts.inter(
                         fontSize: isMobile ? 11.5 : 13,
-                        color: isDark
-                            ? AppTheme.darkTextSecondary
-                            : AppTheme.lightTextSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
@@ -412,8 +467,8 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                 icon: const Icon(Icons.person_add_rounded, size: 15),
                 label: Text(isMobile ? 'Add' : 'Add Patient'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryCyan,
-                  foregroundColor: Colors.black,
+                  backgroundColor: primaryColor,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: EdgeInsets.symmetric(
                     horizontal: isMobile ? 12 : 16,
                     vertical: 10,
@@ -442,9 +497,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: isDark
-                  ? AppTheme.darkTextSecondary
-                  : AppTheme.lightTextSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 10),
@@ -463,10 +516,10 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: EdgeInsets.all(isMobile ? 12 : 16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkCard : Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                    color: borderColor,
                   ),
                 ),
                 child: Row(
@@ -475,7 +528,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                       width: isMobile ? 38 : 44,
                       height: isMobile ? 38 : 44,
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryCyan.withValues(alpha: 0.15),
+                        color: primaryColor.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
@@ -486,7 +539,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                         style: GoogleFonts.inter(
                           fontSize: isMobile ? 15 : 18,
                           fontWeight: FontWeight.w800,
-                          color: AppTheme.primaryCyan,
+                          color: primaryColor,
                         ),
                       ),
                     ),
@@ -503,9 +556,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: isMobile ? 14 : 15.5,
                                     fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? Colors.white
-                                        : AppTheme.lightTextPrimary,
+                                    color: textPrimary,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -518,7 +569,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryCyan.withValues(
+                                  color: primaryColor.withValues(
                                     alpha: 0.12,
                                   ),
                                   borderRadius: BorderRadius.circular(6),
@@ -528,7 +579,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                                   style: GoogleFonts.robotoMono(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w700,
-                                    color: AppTheme.primaryCyan,
+                                    color: primaryColor,
                                   ),
                                 ),
                               ),
@@ -545,9 +596,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                                 'Age: ${p.age}y • Gender: ${p.gender}$countryDisplay • Blood: ${p.bloodGroup} • Phone: ${p.phone} • Date: ${DateFormat('yyyy-MM-dd').format(p.createdAt)}',
                                 style: GoogleFonts.inter(
                                   fontSize: isMobile ? 11 : 12,
-                                  color: isDark
-                                      ? AppTheme.darkTextSecondary
-                                      : AppTheme.lightTextSecondary,
+                                  color: textSecondary,
                                 ),
                               );
                             },
@@ -561,7 +610,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 fontStyle: FontStyle.italic,
-                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                                color: textSecondary,
                               ),
                             ),
                           ],
@@ -592,6 +641,7 @@ class _PatientsSectionScreenState extends State<PatientsSectionScreen> {
                                 onPressed: () => Navigator.pop(ctx, true),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.alertRed,
+                                  foregroundColor: Colors.white,
                                 ),
                                 child: const Text('Delete'),
                               ),

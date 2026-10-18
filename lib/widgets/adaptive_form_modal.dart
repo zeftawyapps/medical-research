@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_theme.dart';
 import '../theme/responsive_layout.dart';
 
 Future<T?> showAdaptiveFormModal<T>({
@@ -14,7 +13,14 @@ Future<T?> showAdaptiveFormModal<T>({
   String saveButtonText = 'Save Record',
 }) {
   final isMobileOrCompact = ResponsiveLayout.isMobileOrLandscape(context);
-  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+  final isDark = theme.brightness == Brightness.dark;
+  final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+  final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+  final textPrimary = colorScheme.onSurface;
+  final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
+  final surfaceBg = isDark ? colorScheme.surface : const Color(0xFFF8FAFC);
 
   if (isMobileOrCompact) {
     return showModalBottomSheet<T>(
@@ -48,7 +54,7 @@ Future<T?> showAdaptiveFormModal<T>({
                   maxHeight: math.max(120.0, maxSheetHeight),
                 ),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkCard : Colors.white,
+                  color: cardBg,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   boxShadow: [
                     BoxShadow(
@@ -59,7 +65,7 @@ Future<T?> showAdaptiveFormModal<T>({
                   ],
                   border: Border(
                     top: BorderSide(
-                      color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                      color: borderColor,
                       width: 1,
                     ),
                   ),
@@ -67,7 +73,7 @@ Future<T?> showAdaptiveFormModal<T>({
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Top Header Section: Compact in landscape keyboard mode like WhatsApp
+                    // Top Header Section: Compact in landscape keyboard mode
                     if (isUltraCompact)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -81,7 +87,7 @@ Future<T?> showAdaptiveFormModal<T>({
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                                  color: textPrimary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -98,8 +104,8 @@ Future<T?> showAdaptiveFormModal<T>({
                                 style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryCyan,
-                                foregroundColor: Colors.black,
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 visualDensity: VisualDensity.compact,
@@ -158,7 +164,7 @@ Future<T?> showAdaptiveFormModal<T>({
                                         style: GoogleFonts.inter(
                                           fontSize: 15.5,
                                           fontWeight: FontWeight.w800,
-                                          color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                                          color: textPrimary,
                                           letterSpacing: -0.3,
                                         ),
                                         maxLines: 1,
@@ -169,14 +175,14 @@ Future<T?> showAdaptiveFormModal<T>({
                                         style: GoogleFonts.inter(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w500,
-                                          color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                                          color: textSecondary,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
                                 Material(
-                                  color: isDark ? AppTheme.darkSurface : AppTheme.lightBorder.withValues(alpha: 0.4),
+                                  color: surfaceBg,
                                   borderRadius: BorderRadius.circular(20),
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(20),
@@ -196,10 +202,10 @@ Future<T?> showAdaptiveFormModal<T>({
                     Divider(
                       height: 1,
                       thickness: 1,
-                      color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder.withValues(alpha: 0.6),
+                      color: borderColor,
                     ),
 
-                    // Scrollable Form Body with WhatsApp-like keyboard avoidance
+                    // Scrollable Form Body
                     Flexible(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
@@ -212,7 +218,7 @@ Future<T?> showAdaptiveFormModal<T>({
                       ),
                     ),
 
-                    // Bottom Action Bar: hidden in landscape keyboard mode so text fields have full vertical room
+                    // Bottom Action Bar
                     if (!isUltraCompact)
                       Container(
                         padding: EdgeInsets.fromLTRB(
@@ -222,10 +228,10 @@ Future<T?> showAdaptiveFormModal<T>({
                           math.max(12.0, bottomPadding + 6.0),
                         ),
                         decoration: BoxDecoration(
-                          color: isDark ? AppTheme.darkSurface : const Color(0xFFF8FAFC),
+                          color: surfaceBg,
                           border: Border(
                             top: BorderSide(
-                              color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                              color: borderColor,
                               width: 1,
                             ),
                           ),
@@ -247,7 +253,7 @@ Future<T?> showAdaptiveFormModal<T>({
                                 style: OutlinedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  side: BorderSide(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+                                  side: BorderSide(color: borderColor),
                                 ),
                               ),
                             ),
@@ -264,10 +270,10 @@ Future<T?> showAdaptiveFormModal<T>({
                                   style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.5),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.primaryCyan,
-                                  foregroundColor: Colors.black,
+                                  backgroundColor: colorScheme.primary,
+                                  foregroundColor: colorScheme.onPrimary,
                                   elevation: 2,
-                                  shadowColor: AppTheme.primaryCyan.withValues(alpha: 0.4),
+                                  shadowColor: colorScheme.primary.withValues(alpha: 0.4),
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
@@ -296,7 +302,7 @@ Future<T?> showAdaptiveFormModal<T>({
             final isCompactHeight = mediaQuery.size.height < 600;
 
             return AlertDialog(
-              backgroundColor: isDark ? AppTheme.darkCard : Colors.white,
+              backgroundColor: cardBg,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
               insetPadding: EdgeInsets.symmetric(
                 horizontal: 24,
@@ -323,13 +329,13 @@ Future<T?> showAdaptiveFormModal<T>({
                       children: [
                         Text(
                           title,
-                          style: GoogleFonts.inter(fontSize: 16.5, fontWeight: FontWeight.w800),
+                          style: GoogleFonts.inter(fontSize: 16.5, fontWeight: FontWeight.w800, color: textPrimary),
                         ),
                         Text(
                           'SQLite Local Storage Registry',
                           style: GoogleFonts.inter(
                             fontSize: 11,
-                            color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                            color: textSecondary,
                           ),
                         ),
                       ],
@@ -357,6 +363,7 @@ Future<T?> showAdaptiveFormModal<T>({
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    side: BorderSide(color: borderColor),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -369,12 +376,12 @@ Future<T?> showAdaptiveFormModal<T>({
                     style: GoogleFonts.inter(fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryCyan,
-                    foregroundColor: Colors.black,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     elevation: 2,
-                    shadowColor: AppTheme.primaryCyan.withValues(alpha: 0.3),
+                    shadowColor: colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
               ],

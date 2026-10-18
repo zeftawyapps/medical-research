@@ -6,6 +6,16 @@ import 'package:medecat_research/services/database/mock_data_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+/// ============================================================================
+/// 🧪 MockDataService & Anti-Duplication Test Suite (اختبارات البيانات التجريبية والحماية من التكرار)
+/// 
+/// تغطي هذه المجموعة:
+/// 1. التحقق من توليد 520 حالة باللغة الإنجليزية في [MockDataService].
+/// 2. اختبار تفعيل وتعطيل البيانات التجريبية عبر متغيرات الضبط [enabliMockData] و [isenable] في [AppConfig].
+/// 3. اختبار آلية الحماية من التكرار (Anti-Duplication Lock) عند استدعاء `seedMockData` لمرات متتالية.
+/// 4. اختبار حذف وتفريغ البيانات التجريبية فقط [clearMockData] دون التأثير على بيانات المرضى الحقيقيين.
+/// ============================================================================
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();

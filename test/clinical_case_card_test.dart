@@ -3,8 +3,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:medecat_research/models/patient_record_brd.dart';
 import 'package:medecat_research/widgets/clinical_case_card.dart';
 
+/// ============================================================================
+/// 🧪 ClinicalCaseCard Test Suite (مجموعة اختبارات بطاقة الحالة السريرية)
+/// 
+/// الهدف من الاختبارات:
+/// 1. التحقق من قدرة عنصر [ClinicalCaseCard] على عرض النصوص الطويلة جداً
+///    (مثل الاسم الممتد، تفاصيل التشخيص المعقد، اسم المستشفى والعملية)
+/// 2. التأكد من عدم حدوث أي Overflow أو أخطاء في الـ Layout على الشاشات الصغيرة (Mobile View - 360px).
+/// 3. التحقق من ظهور حقول البحث المطابقة (Matched Search Highlights) بشكل صحيح.
+/// ============================================================================
+
 void main() {
-  testWidgets('ClinicalCaseCard handles extremely long text without overflow or truncation', (WidgetTester tester) async {
+  group('ClinicalCaseCard - UI & Responsiveness Tests', () {
+    /// --------------------------------------------------------------------------
+    /// 📋 Test Case 1:
+    /// التحقق من معالجة النصوص الطويلة جداً بدون حدوث تجاوز في أبعاد الشاشة (Zero Overflow)
+    /// --------------------------------------------------------------------------
+    testWidgets(
+      'ClinicalCaseCard handles extremely long text without overflow or truncation',
+      (WidgetTester tester) async {
     tester.view.physicalSize = const Size(360, 640); // Small mobile screen width
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -79,5 +96,6 @@ void main() {
     expect(find.textContaining('Extensive bilateral secondary post-traumatic'), findsOneWidget);
     expect(find.textContaining('The Royal Specialized Surgical Center'), findsOneWidget);
     expect(find.textContaining('Extremely detailed patient clinical note'), findsOneWidget);
+  });
   });
 }

@@ -1,24 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:JoDija_tamplites/JoDija_tamplites.dart';
+import 'package:JoDija_tamplites/JoDija_tamplites.dart' hide MainScreen;
 
 import 'providers/research_provider.dart';
 import 'screens/clinical_case_management_screen.dart';
 import 'screens/clinical_query_screen.dart';
 import 'screens/clinical_settings_screen.dart';
-import 'theme/app_theme.dart'; // <-- السطر 8
-/// متغير التحكم في إظهار أو إخفاء البيانات الوهمية (Mock Data) في شاشة الإعدادات:
-/// عند تعيينه على true تظهر بطاقة توليد البيانات الوهمية، وعند false تختفي تماماً.
-bool enabliMockData = true;
+// import 'screens/main_screen.dart';
+import 'widgets/database_inspector_dialog.dart';
+import 'theme/app_theme.dart';
 
-// Aliases للتحكم المريح
-bool get isenable => enabliMockData;
-set isenable(bool value) => enabliMockData = value;
-
-bool get isEnable => enabliMockData;
-set isEnable(bool value) => enabliMockData = value;
-
-bool get enableMockData => enabliMockData;
-set enableMockData(bool value) => enabliMockData = value;
+export 'config/app_config.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,20 +29,61 @@ class MedecatResearchApp extends StatelessWidget {
     final provider = context.watch<ResearchProvider>();
 
     return AdaptiveAppShell(
+      key: const ValueKey('medecat-research-adaptive-shell'),
       titleApp: 'Clinical & Surgical Research',
       initRouter: '/clinical_query',
       languageCode: 'en',
       isDarkMode: provider.isDarkMode,
-      lightTheme: AppTheme.lightTheme, // <-- السطر 32
-      darkTheme: AppTheme.darkTheme, // <-- السطر 33
+      lightTheme: AppTheme.getTheme(provider.selectedPalette, false),
+      darkTheme: AppTheme.getTheme(provider.selectedPalette, true),
       loclizationLangs: {
         'ar': AppLocalizationsInit(),
         'en': AppLocalizationsInit(),
       },
-      sidebarBackgroundColor: const Color(0xFF0F172A),
-      sidebarSelectedColor: const Color(0xFF0D9488),
-      sidebarTextColor: Colors.white70,
-      sidebarSelectedTextColor: Colors.white,
+      sidebarHeader: SidebarHeaderConfig(
+        title: 'MEDECAT RESEARCH',
+        logoAssetPath: 'assets/icon/app_icon.png',
+        logoWidth: 36,
+        logoHight: 36,
+        logoRadius: BorderRadius.circular(9),
+        titleStyle: TextStyle(
+          fontSize: 14.5,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.1,
+          color: provider.isDarkMode
+              ? Colors.white
+              : provider.currentPaletteConfig.lightTextPrimary,
+        ),
+        backgroundColor: Colors.transparent,
+      ),
+      sidebarBackgroundColor: AppTheme.getSidebarBg(
+        provider.selectedPalette,
+        provider.isDarkMode,
+      ),
+      sidebarSelectedColor: AppTheme.getSidebarSelectedColor(
+        provider.selectedPalette,
+        provider.isDarkMode,
+      ),
+      sidebarHoverColor: AppTheme.getSidebarHoverColor(
+        provider.selectedPalette,
+        provider.isDarkMode,
+      ),
+      sidebarTextColor: AppTheme.getSidebarTextColor(
+        provider.selectedPalette,
+        provider.isDarkMode,
+      ),
+      sidebarSelectedTextColor: AppTheme.getSidebarSelectedTextColor(
+        provider.selectedPalette,
+        provider.isDarkMode,
+      ),
+      sidebarIconColor: AppTheme.getSidebarIconColor(
+        provider.selectedPalette,
+        provider.isDarkMode,
+      ),
+      sidebarSelectedIconColor: AppTheme.getSidebarSelectedIconColor(
+        provider.selectedPalette,
+        provider.isDarkMode,
+      ),
       sidebarItems: [
         RouteItem(
           id: 'clinical_query',
@@ -62,11 +94,38 @@ class MedecatResearchApp extends StatelessWidget {
           isSideBarRouted: true,
           isAppBar: true,
           actions: [
+            IconButton(
+              tooltip: 'Advanced Filter',
+              icon: Icon(
+                Icons.tune_rounded,
+                color: provider.currentPaletteConfig.getPrimary(provider.isDarkMode),
+              ),
+              onPressed: () {
+                ClinicalQueryScreen.queryKey.currentState
+                    ?.openAdvancedSearchDialog();
+              },
+            ),
+            IconButton(
+              tooltip: 'Refresh Cases',
+              icon: Icon(
+                Icons.refresh_rounded,
+                color: provider.currentPaletteConfig.getPrimary(provider.isDarkMode),
+              ),
+              onPressed: () {
+                ClinicalQueryScreen.queryKey.currentState?.refreshCases();
+              },
+            ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert),
-              tooltip: 'Options',
+              tooltip: 'Export & Options',
               onSelected: (val) {
-                if (val == 'refresh') {
+                if (val == 'export_excel') {
+                  ClinicalQueryScreen.queryKey.currentState
+                      ?.exportPatientsToExcel();
+                } else if (val == 'export_csv') {
+                  ClinicalQueryScreen.queryKey.currentState
+                      ?.exportPatientsToCsv();
+                } else if (val == 'refresh') {
                   ClinicalQueryScreen.queryKey.currentState?.refreshCases();
                 } else if (val == 'advanced_filter') {
                   ClinicalQueryScreen.queryKey.currentState
@@ -78,22 +137,51 @@ class MedecatResearchApp extends StatelessWidget {
               },
               itemBuilder: (ctx) => [
                 const PopupMenuItem<String>(
-                  value: 'refresh',
+                  value: 'export_excel',
                   child: Row(
                     children: [
-                      Icon(Icons.refresh_rounded, size: 18),
+                      Icon(Icons.table_view_rounded, color: Colors.green, size: 20),
                       SizedBox(width: 10),
-                      Text('Refresh'),
+                      Expanded(
+                        child: Text('Export to Excel (.xlsx)', softWrap: false),
+                      ),
                     ],
                   ),
                 ),
+                const PopupMenuItem<String>(
+                  value: 'export_csv',
+                  child: Row(
+                    children: [
+                      Icon(Icons.description_outlined, color: Colors.blueAccent, size: 20),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text('Export to CSV (.csv)', softWrap: false),
+                      ),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
                 const PopupMenuItem<String>(
                   value: 'advanced_filter',
                   child: Row(
                     children: [
                       Icon(Icons.tune_rounded, size: 18),
                       SizedBox(width: 10),
-                      Text('Advanced Filter', softWrap: true),
+                      Expanded(
+                        child: Text('Advanced Filter', softWrap: false),
+                      ),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'refresh',
+                  child: Row(
+                    children: [
+                      Icon(Icons.refresh_rounded, size: 18),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text('Refresh', softWrap: false),
+                      ),
                     ],
                   ),
                 ),
@@ -103,28 +191,65 @@ class MedecatResearchApp extends StatelessWidget {
                     children: [
                       Icon(Icons.more_horiz_rounded, size: 18),
                       SizedBox(width: 10),
-                      Text('Upcoming Feature'),
+                      Expanded(
+                        child: Text('Upcoming Feature', softWrap: false),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
+            const SizedBox(width: 8),
           ],
         ),
+
+        // RouteItem(
+        //   id: 'surgical_registry',
+        //   path: '/surgical_registry',
+        //   label: 'Surgical Registry Hub',
+        //   icon: Icons.dashboard_customize_rounded,
+        //   content: const MainScreen(),
+        //   isSideBarRouted: true,
+        //   isAppBar: false,
+        // ),
         RouteItem(
           id: 'surgical_hub',
           path: '/surgical_hub',
           label: 'Case Management',
-          icon: Icons.health_and_safety_rounded,
+          icon: Icons.folder_shared_rounded,
           content: ClinicalCaseManagementScreen(
             key: ClinicalCaseManagementScreen.caseManagementKey,
           ),
           isSideBarRouted: true,
           isAppBar: true,
           actions: [
+            Builder(
+              builder: (ctx) => IconButton(
+                tooltip: 'Return to Home / Research Query',
+                icon: Icon(
+                  Icons.home_rounded,
+                  color: provider.currentPaletteConfig.getPrimary(provider.isDarkMode),
+                ),
+                onPressed: () => ClinicalCaseManagementScreen.navigateToHome(ctx),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Search Patients',
+              icon: Icon(
+                Icons.person_search_rounded,
+                color: provider.currentPaletteConfig.getPrimary(provider.isDarkMode),
+              ),
+              onPressed: () {
+                ClinicalCaseManagementScreen.caseManagementKey.currentState
+                    ?.openPatientSearchDialog();
+              },
+            ),
             IconButton(
               tooltip: 'Register New Patient',
-              icon: const Icon(Icons.person_add_alt, color: Colors.tealAccent),
+              icon: Icon(
+                Icons.person_add_alt,
+                color: provider.currentPaletteConfig.getPrimary(provider.isDarkMode),
+              ),
               onPressed: () {
                 ClinicalCaseManagementScreen.caseManagementKey.currentState
                     ?.openAddPatientDialog();
@@ -162,6 +287,7 @@ class MedecatResearchApp extends StatelessWidget {
             const SizedBox(width: 8),
           ],
         ),
+
         RouteItem(
           id: 'clinical_settings',
           path: '/clinical_settings',
@@ -172,10 +298,16 @@ class MedecatResearchApp extends StatelessWidget {
           isAppBar: true,
           actions: [
             IconButton(
-              tooltip: provider.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+              tooltip: provider.isDarkMode
+                  ? 'Switch to Light Mode'
+                  : 'Switch to Dark Mode',
               icon: Icon(
-                provider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                color: provider.isDarkMode ? Colors.amberAccent : Colors.tealAccent,
+                provider.isDarkMode
+                    ? Icons.light_mode_rounded
+                    : Icons.dark_mode_rounded,
+                color: provider.isDarkMode
+                    ? Colors.amberAccent
+                    : provider.currentPaletteConfig.getPrimary(false),
               ),
               onPressed: () => provider.toggleTheme(),
             ),
@@ -183,7 +315,9 @@ class MedecatResearchApp extends StatelessWidget {
               icon: const Icon(Icons.more_vert),
               tooltip: 'Settings Options',
               onSelected: (val) {
-                if (val == 'reload') {
+                if (val == 'inspect_db') {
+                  DatabaseInspectorDialog.show(context);
+                } else if (val == 'reload') {
                   provider.reloadAllData();
                 } else if (val == 'toggle_theme') {
                   provider.toggleTheme();
@@ -193,6 +327,20 @@ class MedecatResearchApp extends StatelessWidget {
                 }
               },
               itemBuilder: (ctx) => [
+                const PopupMenuItem<String>(
+                  value: 'inspect_db',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.plagiarism_outlined,
+                        color: Colors.teal,
+                        size: 18,
+                      ),
+                      SizedBox(width: 10),
+                      Text('Database Inspector'),
+                    ],
+                  ),
+                ),
                 const PopupMenuItem<String>(
                   value: 'reload',
                   child: Row(
@@ -208,11 +356,17 @@ class MedecatResearchApp extends StatelessWidget {
                   child: Row(
                     children: [
                       Icon(
-                        provider.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                        provider.isDarkMode
+                            ? Icons.light_mode_rounded
+                            : Icons.dark_mode_rounded,
                         size: 18,
                       ),
                       const SizedBox(width: 10),
-                      Text(provider.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'),
+                      Text(
+                        provider.isDarkMode
+                            ? 'Switch to Light Mode'
+                            : 'Switch to Dark Mode',
+                      ),
                     ],
                   ),
                 ),
@@ -220,9 +374,16 @@ class MedecatResearchApp extends StatelessWidget {
                   value: 'purge_db',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_sweep_rounded, color: Colors.red, size: 18),
+                      Icon(
+                        Icons.delete_sweep_rounded,
+                        color: Colors.red,
+                        size: 18,
+                      ),
                       SizedBox(width: 10),
-                      Text('Purge All Records', style: TextStyle(color: Colors.red)),
+                      Text(
+                        'Purge All Records',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ],
                   ),
                 ),

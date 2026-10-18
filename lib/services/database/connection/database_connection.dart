@@ -45,6 +45,16 @@ class DatabaseConnection {
         // Column already exists or table not yet created
       }
       try {
+        await db.execute('ALTER TABLE ${PreOpTable.tableName} ADD COLUMN ${PreOpTable.columnTsh} REAL;');
+      } catch (_) {
+        // Column already exists or table not yet created
+      }
+      try {
+        await db.execute('ALTER TABLE ${PreOpTable.tableName} ADD COLUMN ${PreOpTable.columnHbA1c} REAL;');
+      } catch (_) {
+        // Column already exists or table not yet created
+      }
+      try {
         await db.execute('ALTER TABLE ${OperationTable.tableName} ADD COLUMN ${OperationTable.columnHospital} TEXT;');
       } catch (_) {
         // Column already exists or table not yet created

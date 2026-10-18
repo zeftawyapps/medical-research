@@ -42,12 +42,15 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
     final opTypeController = TextEditingController();
     final diagnosisController = TextEditingController();
     DateTime opDate = DateTime.now();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
 
     showAdaptiveFormModal(
       context: context,
       title: 'Add Operation & Diagnosis',
       icon: Icons.medical_services_outlined,
-      iconColor: AppTheme.accentIndigo,
+      iconColor: primaryColor,
       saveButtonText: 'Save Operation',
       formBuilder: (ctx, setModalState) {
         return Column(
@@ -145,8 +148,9 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
           if (context.mounted) {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Operation saved into SQLite database!'),
+              SnackBar(
+                content: const Text('Operation saved into SQLite database!'),
+                backgroundColor: primaryColor,
               ),
             );
           }
@@ -158,8 +162,14 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
     final isMobile = ResponsiveLayout.isMobile(context);
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
 
     final filteredOps = provider.operations.where((op) {
       if (_query.isEmpty) return true;
@@ -195,9 +205,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                       style: GoogleFonts.inter(
                         fontSize: isMobile ? 18 : 22,
                         fontWeight: FontWeight.w800,
-                        color: isDark
-                            ? Colors.white
-                            : AppTheme.lightTextPrimary,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -205,9 +213,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                       'Link surgical procedures, dates, and primary diagnoses with patients.',
                       style: GoogleFonts.inter(
                         fontSize: isMobile ? 11.5 : 13,
-                        color: isDark
-                            ? AppTheme.darkTextSecondary
-                            : AppTheme.lightTextSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
@@ -218,8 +224,8 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                 icon: const Icon(Icons.add_rounded, size: 15),
                 label: Text(isMobile ? 'Add' : 'Add Operation'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryCyan,
-                  foregroundColor: Colors.black,
+                  backgroundColor: primaryColor,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: EdgeInsets.symmetric(
                     horizontal: isMobile ? 12 : 16,
                     vertical: 10,
@@ -247,9 +253,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: isDark
-                  ? AppTheme.darkTextSecondary
-                  : AppTheme.lightTextSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 10),
@@ -271,10 +275,10 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: EdgeInsets.all(isMobile ? 12 : 16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkCard : Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                    color: borderColor,
                   ),
                 ),
                 child: Row(
@@ -283,12 +287,12 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppTheme.accentIndigo.withValues(alpha: 0.15),
+                        color: colorScheme.secondary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.medical_information_rounded,
-                        color: AppTheme.accentIndigo,
+                        color: colorScheme.secondary,
                         size: 20,
                       ),
                     ),
@@ -306,6 +310,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: isMobile ? 14.5 : 16,
                                     fontWeight: FontWeight.w700,
+                                    color: textPrimary,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -317,7 +322,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryCyan.withValues(
+                                  color: primaryColor.withValues(
                                     alpha: 0.12,
                                   ),
                                   borderRadius: BorderRadius.circular(6),
@@ -329,7 +334,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.primaryCyan,
+                                    color: primaryColor,
                                   ),
                                 ),
                               ),
@@ -341,7 +346,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                             style: GoogleFonts.inter(
                               fontSize: isMobile ? 11.5 : 13,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryTeal,
+                              color: primaryColor,
                             ),
                           ),
                           const SizedBox(height: 3),
@@ -349,19 +354,17 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                             'Diagnosis: ${op.diagnosisDetails}',
                             style: GoogleFonts.inter(
                               fontSize: isMobile ? 11.5 : 12.5,
-                              color: isDark
-                                  ? AppTheme.darkTextSecondary
-                                  : AppTheme.lightTextSecondary,
+                              color: textSecondary,
                             ),
                           ),
                           if (op.hospital.isNotEmpty) ...[
                             const SizedBox(height: 3),
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.local_hospital_rounded,
                                   size: 13,
-                                  color: AppTheme.primaryTeal,
+                                  color: primaryColor,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -369,7 +372,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                                   style: GoogleFonts.inter(
                                     fontSize: isMobile ? 11 : 12,
                                     fontWeight: FontWeight.w600,
-                                    color: AppTheme.primaryTeal,
+                                    color: primaryColor,
                                   ),
                                 ),
                               ],
@@ -402,6 +405,7 @@ class _OperationsSectionScreenState extends State<OperationsSectionScreen> {
                                 onPressed: () => Navigator.pop(ctx, true),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.alertRed,
+                                  foregroundColor: Colors.white,
                                 ),
                                 child: const Text('Delete'),
                               ),

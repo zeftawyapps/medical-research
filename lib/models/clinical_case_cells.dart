@@ -1,6 +1,7 @@
 import 'package:JoDija_tamplites/util/cell_models/cell.dart';
 import 'package:JoDija_tamplites/util/cell_models/cell_data_type.dart';
 import 'package:JoDija_tamplites/util/cell_models/modul_screateor.dart';
+import '../utils/bmi_calculator.dart';
 import 'pre_op_model.dart';
 import 'intra_op_model.dart';
 import 'complication_model.dart';
@@ -68,13 +69,29 @@ class PreOpAndOperativeCellModel extends CellModel {
     hint: 'e.g., 1.75',
   );
 
-  // 6/ Investigations:
+  // 6/ Investigations & Labs:
   final hemoglobin = Cell<double>(
     'hemoglobin',
     caption: 'Hemoglobin (Hb)',
     type: CellDataType.decimal,
     unit: 'g/dL',
     hint: 'Normal range: 13.5 - 17.5',
+  );
+
+  final tsh = Cell<double>(
+    'tsh',
+    caption: 'Thyroid Stimulating Hormone (TSH)',
+    type: CellDataType.decimal,
+    unit: 'µIU/mL',
+    hint: 'Normal range: 0.4 - 4.0',
+  );
+
+  final hba1c = Cell<double>(
+    'hba1c',
+    caption: 'Glycated Hemoglobin (HbA1c)',
+    type: CellDataType.decimal,
+    unit: '%',
+    hint: 'Normal range: 4.0 - 5.6',
   );
 
   final t3 = Cell<double>(
@@ -168,13 +185,7 @@ class PreOpAndOperativeCellModel extends CellModel {
   }
 
   /// Automatic BMI calculation
-  double? get calculatedBmi {
-    final w = weightKg.value;
-    final h = heightM.value;
-    if (w == null || h == null || h <= 0 || w <= 0) return null;
-    final res = w / (h * h);
-    return double.parse(res.toStringAsFixed(2));
-  }
+  double? get calculatedBmi => BmiCalculator.calculate(weightKg.value, heightM.value);
 
   /// Populate cells from clinical models
   void populateFromModels(PreOpModel? preOp, IntraOpModel? intraOp) {

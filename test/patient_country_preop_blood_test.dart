@@ -2,9 +2,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:medecat_research/data/countries_data.dart';
 import 'package:medecat_research/models/patient_record_brd.dart';
 
+/// ============================================================================
+/// 🧪 Patient Country, Pre-Op & Demographics Test Suite (اختبارات دول المرضى والتفاصيل ما قبل الجراحة)
+/// 
+/// تغطي هذه المجموعة:
+/// 1. التحقق من قائمة الدول الرئيسية والأعلام [worldCountries] ودالة المطابقة والبحث [findCountry].
+/// 2. اختبار تخزين واسترجاع حقل الدولة والملاحظات في [PatientModel].
+/// 3. اختبار بنية [PreOpModel] وخلوه من حقل فصيلة الدم المكرر (Blood Group) والتحقق من حسابات BMI والطول والوزن والتدخين.
+/// ============================================================================
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  /// --------------------------------------------------------------------------
+  /// 📦 Group 1: Streamlined Countries Data & Flag Emoji Verification
+  /// فحص قائمة الدول وأعلام الإيموجي والبحث باللغتين العربية والإنجليزية
+  /// --------------------------------------------------------------------------
   group('Streamlined Countries Data & Flag Emoji Verification', () {
     test('worldCountries contains the streamlined list with primary 4 countries first', () {
       expect(worldCountries, isNotEmpty);

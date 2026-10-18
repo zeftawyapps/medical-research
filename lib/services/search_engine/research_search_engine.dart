@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/patient_record_brd.dart';
+import '../../screens/clinical_query/models/clinical_query_models.dart';
 
 enum TimeFramePreset {
   allTime,
@@ -173,6 +174,77 @@ class ResearchSearchEngine {
             return true;
         }
       });
+    }).toList();
+  }
+
+  /// Filter cases by Advanced Filter Criteria
+  static List<CompleteClinicalCase> filterByAdvancedCriteria(
+    List<CompleteClinicalCase> cases,
+    AdvancedFilterCriteria criteria,
+  ) {
+    if (!criteria.isActive) return cases;
+
+    return cases.where((c) {
+      // 1. Procedure
+      if (criteria.procedure != null && criteria.procedure!.isNotEmpty) {
+        if (c.operation.operationType.toLowerCase() !=
+            criteria.procedure!.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 2. Gender
+      if (criteria.gender != null && criteria.gender!.isNotEmpty) {
+        final g = c.patient.gender.toLowerCase();
+        if (g != criteria.gender!.toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 3. Age Range
+      if (criteria.ageRange != null) {
+        final age = c.patient.age;
+        if (age < criteria.ageRange!.start || age > criteria.ageRange!.end) {
+          return false;
+        }
+      }
+
+      // 4. Complication Grade
+      if (criteria.complicationGrade != null &&
+          criteria.complicationGrade!.isNotEmpty) {
+        final hasMatchingGrade = c.complications.any((comp) =>
+            comp.grade.toLowerCase() ==
+            criteria.complicationGrade!.toLowerCase());
+        if (!hasMatchingGrade) return false;
+      }
+
+      // 5. Garment Required
+      if (criteria.garmentRequired != null) {
+        final garment = c.intraOp?.isGarmentRequired ?? false;
+        if (garment != criteria.garmentRequired) return false;
+      }
+
+      // 6. BMI Range
+      if (criteria.bmiRange != null) {
+        final bmiVal = c.preOp?.bmi ??
+            (c.patient.bmi != null ? double.tryParse(c.patient.bmi!) : null);
+        if (bmiVal == null ||
+            bmiVal < criteria.bmiRange!.start ||
+            bmiVal > criteria.bmiRange!.end) {
+          return false;
+        }
+      }
+
+      // 7. Fat Volume Range
+      if (criteria.fatVolumeRange != null) {
+        final fat = c.intraOp?.amountOfFatLiters ?? 0.0;
+        if (fat < criteria.fatVolumeRange!.start ||
+            fat > criteria.fatVolumeRange!.end) {
+          return false;
+        }
+      }
+
+      return true;
     }).toList();
   }
 
@@ -383,12 +455,16 @@ class ResearchSearchEngine {
 
     int compCases = 0;
     double totalAge = 0;
+    int validAgeCases = 0;
     int garmentCases = 0;
     final Map<String, int> gradeDist = {};
     final Map<String, int> surgeryDist = {};
 
     for (var c in cases) {
-      totalAge += c.patient.age;
+      if (c.patient.age > 0) {
+        totalAge += c.patient.age;
+        validAgeCases++;
+      }
       surgeryDist[c.operation.operationType] =
           (surgeryDist[c.operation.operationType] ?? 0) + 1;
 
@@ -407,10 +483,10 @@ class ResearchSearchEngine {
     return TimeFrameStats(
       totalCases: cases.length,
       casesWithComplications: compCases,
-      complicationRate: (compCases / cases.length) * 100,
-      meanAge: totalAge / cases.length,
+      complicationRate: cases.isNotEmpty ? (compCases / cases.length) * 100 : 0.0,
+      meanAge: validAgeCases > 0 ? (totalAge / validAgeCases) : 0.0,
       garmentUsageCount: garmentCases,
-      garmentUsageRate: (garmentCases / cases.length) * 100,
+      garmentUsageRate: cases.isNotEmpty ? (garmentCases / cases.length) * 100 : 0.0,
       gradeDistribution: gradeDist,
       surgeryTypeDistribution: surgeryDist,
     );

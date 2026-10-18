@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/operation_model.dart';
 import '../../models/patient_model.dart';
-import '../../theme/app_theme.dart';
 import '../../theme/responsive_layout.dart';
 import '../../widgets/age_at_operation_badge.dart';
 import '../../widgets/bmi_indicator_widget.dart';
 import '../../widgets/medical_image_gallery_widget.dart';
 import '../../widgets/conditional_garment_section_widget.dart';
+import '../../widgets/past_medical_history_chips_widget.dart';
 
 class PreOpTab extends StatelessWidget {
   final OperationModel? selectedOperation;
@@ -26,8 +26,10 @@ class PreOpTab extends StatelessWidget {
   final TextEditingController weightController;
   final TextEditingController heightController;
   final TextEditingController hbController;
-  final TextEditingController t3Controller;
-  final TextEditingController t4Controller;
+  final TextEditingController tshController;
+  final TextEditingController hba1cController;
+  final TextEditingController? t3Controller;
+  final TextEditingController? t4Controller;
   final List<String> scanPictures;
   final ValueChanged<List<String>> onScanPicturesChanged;
   final List<String> preOpPictures;
@@ -69,8 +71,10 @@ class PreOpTab extends StatelessWidget {
     required this.weightController,
     required this.heightController,
     required this.hbController,
-    required this.t3Controller,
-    required this.t4Controller,
+    required this.tshController,
+    required this.hba1cController,
+    this.t3Controller,
+    this.t4Controller,
     required this.scanPictures,
     required this.onScanPicturesChanged,
     required this.preOpPictures,
@@ -99,16 +103,19 @@ class PreOpTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     if (selectedOperation == null) {
       return Center(
         child: Container(
           padding: const EdgeInsets.all(24),
           margin: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: isDark ? AppTheme.darkCard : Colors.white,
+            color: theme.cardTheme.color ?? colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? AppTheme.darkBorder : Colors.grey.shade200,
+              color: theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -136,8 +143,8 @@ class PreOpTab extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back_rounded, size: 16),
                 label: const Text('Go to Operations Tab'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                 ),
               ),
             ],
@@ -158,25 +165,23 @@ class PreOpTab extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.02)
-                  : Colors.teal.shade50.withValues(alpha: 0.5),
+              color: theme.cardTheme.color ?? colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.teal.shade200),
+              border: Border.all(color: colorScheme.primary.withValues(alpha: 0.3)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Line 1: Heading alone
-                const Row(
+                Row(
                   children: [
                     Icon(
                       Icons.event_note_rounded,
-                      color: Colors.teal,
+                      color: colorScheme.primary,
                       size: 20,
                     ),
-                    SizedBox(width: 8),
-                    Expanded(
+                    const SizedBox(width: 8),
+                    const Expanded(
                       child: Text(
                         'Surgical Procedure Details & Date',
                         style: TextStyle(
@@ -287,19 +292,9 @@ class PreOpTab extends StatelessWidget {
           const SizedBox(height: 24),
 
           // 1/ Past Medical History
-          const Text(
-            '1/ Past Medical & Surgical History (Optional)',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-          const SizedBox(height: 6),
-          TextField(
+          PastMedicalHistoryChipsWidget(
             controller: pastHistoryController,
-            maxLines: 2,
-            scrollPadding: ResponsiveLayout.textFieldScrollPadding(context),
-            decoration: const InputDecoration(
-              hintText:
-                  'Previous surgeries, chronic conditions, allergies, medications...',
-            ),
+            isDark: isDark,
           ),
           const SizedBox(height: 16),
 
@@ -318,14 +313,14 @@ class PreOpTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // 3/ Smoker Switch
+          // 3/ Smoking Switch
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? AppTheme.darkCard : Colors.grey.shade50,
+              color: theme.cardTheme.color ?? colorScheme.surface,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isDark ? AppTheme.darkBorder : Colors.grey.shade300,
+                color: theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.2),
               ),
             ),
             child: Column(
@@ -334,12 +329,12 @@ class PreOpTab extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.smoking_rooms, color: Colors.teal, size: 20),
-                        SizedBox(width: 5),
-                        Text(
-                          '3/ Tobacco Smoker?',
+                        Icon(Icons.smoking_rooms, color: colorScheme.primary, size: 20),
+                        const SizedBox(width: 5),
+                        const Text(
+                          '3/ Smoking Status',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
@@ -349,7 +344,7 @@ class PreOpTab extends StatelessWidget {
                     ),
                     Switch(
                       value: isSmoker,
-                      activeThumbColor: Colors.teal,
+                      activeThumbColor: colorScheme.primary,
                       onChanged: onSmokerChanged,
                     ),
                   ],
@@ -451,7 +446,7 @@ class PreOpTab extends StatelessWidget {
           BmiIndicatorWidget(weightKg: weight, heightM: height),
           const SizedBox(height: 20),
 
-          // 6/ Investigations: Hemoglobin, T3, T4 (Responsive Wrap)
+          // 6/ Investigations: Hemoglobin, TSH, HbA1c (Responsive Wrap)
           const Text(
             '6/ Laboratory Investigations',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
@@ -484,28 +479,28 @@ class PreOpTab extends StatelessWidget {
                   SizedBox(
                     width: itemWidth,
                     child: TextField(
-                      controller: t3Controller,
+                      controller: tshController,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       scrollPadding: ResponsiveLayout.textFieldScrollPadding(context),
                       decoration: const InputDecoration(
-                        labelText: '6.b) Triiodothyronine (T3)',
-                        suffixText: 'ng/dL',
+                        labelText: '6.b) Thyroid Stimulating Hormone (TSH)',
+                        suffixText: 'µIU/mL',
                       ),
                     ),
                   ),
                   SizedBox(
                     width: itemWidth,
                     child: TextField(
-                      controller: t4Controller,
+                      controller: hba1cController,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       scrollPadding: ResponsiveLayout.textFieldScrollPadding(context),
                       decoration: const InputDecoration(
-                        labelText: '6.c) Thyroxine (T4)',
-                        suffixText: 'µg/dL',
+                        labelText: '6.c) Glycated Hemoglobin (HbA1c)',
+                        suffixText: '%',
                       ),
                     ),
                   ),
@@ -654,8 +649,8 @@ class PreOpTab extends StatelessWidget {
           Center(
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal.shade700,
-                foregroundColor: Colors.white,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 36,
                   vertical: 14,

@@ -1,10 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:medecat_research/models/complication_catalog_model.dart';
 
+/// ============================================================================
+/// 🧪 ComplicationCatalogModel Test Suite (اختبارات نموذج كتالوج المضاعفات)
+/// 
+/// الهدف من الاختبارات:
+/// 1. التحقق من صحة بناء النموذج [ComplicationCatalogModel] وتحويله من وإلى Map (Serialization / Deserialization).
+/// 2. التحقق من عمل دالة [copyWith] لتحديث الحقول دون التأثير على الحقول الأصلية غير المعدلة.
+/// ============================================================================
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('ComplicationCatalogModel', () {
+  group('ComplicationCatalogModel - Unit Tests', () {
+    /// --------------------------------------------------------------------------
+    /// 📋 Test 1:
+    /// التحقق من إنشاء النموذج وتحويله إلى Map لقاعدة البيانات وإعادة بنائه
+    /// --------------------------------------------------------------------------
     test('Model instantiation and toMap/fromMap serialization', () {
       final now = DateTime(2026, 9, 6);
       final model = ComplicationCatalogModel(

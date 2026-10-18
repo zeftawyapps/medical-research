@@ -36,12 +36,15 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
     String surveyType = 'Pain VAS Score';
     final q1Controller = TextEditingController(text: '3/10 (Mild)');
     final q2Controller = TextEditingController(text: 'Independent mobilization without assistance');
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
 
     showAdaptiveFormModal(
       context: context,
       title: 'Add Patient Evaluation Survey',
       icon: Icons.poll_rounded,
-      iconColor: AppTheme.accentPurple,
+      iconColor: primaryColor,
       saveButtonText: 'Save Survey',
       formBuilder: (ctx, setModalState) {
         return Column(
@@ -101,7 +104,10 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
         if (context.mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Survey evaluation saved in SQLite!')),
+            SnackBar(
+              content: const Text('Survey evaluation saved in SQLite!'),
+              backgroundColor: primaryColor,
+            ),
           );
         }
       },
@@ -111,8 +117,14 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
     final isMobile = ResponsiveLayout.isMobile(context);
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
 
     final filteredSurveys = provider.surveys.where((s) {
       if (_query.isEmpty) return true;
@@ -141,7 +153,7 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
                       style: GoogleFonts.inter(
                         fontSize: isMobile ? 18 : 22,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -149,7 +161,7 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
                       'Patient-reported outcome measures (PROMs) and surveys.',
                       style: GoogleFonts.inter(
                         fontSize: isMobile ? 11.5 : 13,
-                        color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
@@ -160,8 +172,8 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
                 icon: const Icon(Icons.add_rounded, size: 15),
                 label: Text(isMobile ? 'Add' : 'Add Survey'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentPurple,
-                  foregroundColor: Colors.white,
+                  backgroundColor: primaryColor,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -183,7 +195,7 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+              color: textSecondary,
             ),
           ),
           const SizedBox(height: 10),
@@ -203,9 +215,9 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: EdgeInsets.all(isMobile ? 12 : 16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkCard : Colors.white,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,23 +227,23 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.poll_rounded, color: AppTheme.accentPurple, size: 18),
+                            Icon(Icons.poll_rounded, color: colorScheme.secondary, size: 18),
                             const SizedBox(width: 6),
                             Text(
                               s.surveyType,
-                              style: GoogleFonts.inter(fontSize: isMobile ? 14 : 15.5, fontWeight: FontWeight.w700),
+                              style: GoogleFonts.inter(fontSize: isMobile ? 14 : 15.5, fontWeight: FontWeight.w700, color: textPrimary),
                             ),
                             const SizedBox(width: 6),
                             if (patient != null)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.accentPurple.withValues(alpha: 0.12),
+                                  color: colorScheme.secondary.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   patient.name,
-                                  style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppTheme.accentPurple),
+                                  style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w600, color: colorScheme.secondary),
                                 ),
                               ),
                           ],
@@ -248,9 +260,9 @@ class _SurveysSectionScreenState extends State<SurveysSectionScreen> {
                         padding: const EdgeInsets.only(bottom: 2),
                         child: Row(
                           children: [
-                            Text('• ${e.key}: ', style: GoogleFonts.inter(fontSize: isMobile ? 11.5 : 12.5, fontWeight: FontWeight.w600, color: AppTheme.primaryCyan)),
+                            Text('• ${e.key}: ', style: GoogleFonts.inter(fontSize: isMobile ? 11.5 : 12.5, fontWeight: FontWeight.w600, color: primaryColor)),
                             Expanded(
-                              child: Text('${e.value}', style: GoogleFonts.inter(fontSize: isMobile ? 11.5 : 12.5, color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary)),
+                              child: Text('${e.value}', style: GoogleFonts.inter(fontSize: isMobile ? 11.5 : 12.5, color: textSecondary)),
                             ),
                           ],
                         ),

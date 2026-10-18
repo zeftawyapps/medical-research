@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../utils/bmi_calculator.dart';
 import 'base/data_model.dart';
 import 'operation_model.dart';
 
@@ -18,6 +19,8 @@ class PreOpTable {
   static const String columnHemoglobin = 'hemoglobin';
   static const String columnT3 = 't3';
   static const String columnT4 = 't4';
+  static const String columnTsh = 'tsh';
+  static const String columnHbA1c = 'hba1c';
   static const String columnScanPictures = 'scan_pictures';
   static const String columnPreOpPictures = 'pre_op_pictures';
   static const String columnCaseDescription = 'case_description';
@@ -37,6 +40,8 @@ class PreOpTable {
       $columnHemoglobin REAL,
       $columnT3 REAL,
       $columnT4 REAL,
+      $columnTsh REAL,
+      $columnHbA1c REAL,
       $columnScanPictures TEXT,
       $columnPreOpPictures TEXT,
       $columnCaseDescription TEXT,
@@ -66,10 +71,12 @@ class PreOpModel extends DataModel {
   final double? weightKg;
   final double? heightM;
   
-  // 6/ Investigations
-  final double? hemoglobin; // 6.a) Hemoglobin
-  final double? t3; // 6.b) T3
-  final double? t4; // 6.c) T4
+  // 6/ Investigations & Labs
+  final double? hemoglobin; // 6.a) Hemoglobin (g/dL)
+  final double? tsh; // 6.b) TSH (Thyroid Stimulating Hormone, µIU/mL)
+  final double? hba1c; // 6.c) HbA1c (Glycated Hemoglobin, %)
+  final double? t3; // Legacy T3 fallback
+  final double? t4; // Legacy T4 fallback
   final List<String> scanPictures; // 6.d) Scan picture (photo paths/URLs)
   
   // 7) Pre-operative picture
@@ -96,6 +103,8 @@ class PreOpModel extends DataModel {
     this.weightKg,
     this.heightM,
     this.hemoglobin,
+    this.tsh,
+    this.hba1c,
     this.t3,
     this.t4,
     String? bloodGroup,
@@ -123,25 +132,10 @@ class PreOpModel extends DataModel {
   static String get createTableSql => PreOpTable.createTableSql;
 
   /// Automatic BMI Calculation: Weight (kg) / [Height (m) ^ 2]
-  double? get bmi {
-    if (weightKg == null || heightM == null || heightM! <= 0 || weightKg! <= 0) {
-      return null;
-    }
-    final calc = weightKg! / (heightM! * heightM!);
-    return double.parse(calc.toStringAsFixed(2));
-  }
+  double? get bmi => BmiCalculator.calculate(weightKg, heightM);
 
   /// Categorization of the BMI score
-  String get bmiCategory {
-    final val = bmi;
-    if (val == null) return 'N/A';
-    if (val < 18.5) return 'Underweight';
-    if (val < 25.0) return 'Normal Weight';
-    if (val < 30.0) return 'Overweight';
-    if (val < 35.0) return 'Obese Class I';
-    if (val < 40.0) return 'Obese Class II';
-    return 'Severe Obesity (Class III)';
-  }
+  String get bmiCategory => BmiCalculator.getCategory(bmi);
 
   @override
   Map<String, dynamic> toMap() {
@@ -156,6 +150,8 @@ class PreOpModel extends DataModel {
       PreOpTable.columnWeightKg: weightKg,
       PreOpTable.columnHeightM: heightM,
       PreOpTable.columnHemoglobin: hemoglobin,
+      PreOpTable.columnTsh: tsh,
+      PreOpTable.columnHbA1c: hba1c,
       PreOpTable.columnT3: t3,
       PreOpTable.columnT4: t4,
       PreOpTable.columnScanPictures: jsonEncode(scanPictures),
@@ -179,6 +175,8 @@ class PreOpModel extends DataModel {
       weightKg: (map[PreOpTable.columnWeightKg] as num?)?.toDouble(),
       heightM: (map[PreOpTable.columnHeightM] as num?)?.toDouble(),
       hemoglobin: (map[PreOpTable.columnHemoglobin] as num?)?.toDouble(),
+      tsh: (map[PreOpTable.columnTsh] as num?)?.toDouble(),
+      hba1c: (map[PreOpTable.columnHbA1c] as num?)?.toDouble(),
       t3: (map[PreOpTable.columnT3] as num?)?.toDouble(),
       t4: (map[PreOpTable.columnT4] as num?)?.toDouble(),
       scanPictures: _parseStringList(map[PreOpTable.columnScanPictures] ?? map['radiology_images']),
@@ -214,6 +212,8 @@ class PreOpModel extends DataModel {
     double? weightKg,
     double? heightM,
     double? hemoglobin,
+    double? tsh,
+    double? hba1c,
     double? t3,
     double? t4,
     List<String>? scanPictures,
@@ -231,6 +231,8 @@ class PreOpModel extends DataModel {
       weightKg: weightKg ?? this.weightKg,
       heightM: heightM ?? this.heightM,
       hemoglobin: hemoglobin ?? this.hemoglobin,
+      tsh: tsh ?? this.tsh,
+      hba1c: hba1c ?? this.hba1c,
       t3: t3 ?? this.t3,
       t4: t4 ?? this.t4,
       scanPictures: scanPictures ?? this.scanPictures,

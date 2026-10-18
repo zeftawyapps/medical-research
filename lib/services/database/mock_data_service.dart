@@ -505,8 +505,8 @@ class MockDataService {
 
       // Labs
       final hb = double.parse((12.0 + ((i % 38) * 0.1)).toStringAsFixed(1));
-      final t3 = double.parse((1.4 + ((i % 14) * 0.1)).toStringAsFixed(2));
-      final t4 = double.parse((6.5 + ((i % 45) * 0.1)).toStringAsFixed(1));
+      final tsh = double.parse((1.2 + ((i % 35) * 0.1)).toStringAsFixed(2));
+      final hba1c = double.parse((5.2 + ((i % 25) * 0.1)).toStringAsFixed(1));
 
       // Intra-op details
       final isGarmentRequired = proc['garmentRequired'] as bool;
@@ -568,8 +568,8 @@ class MockDataService {
         weightKg: weightKg,
         heightM: heightM,
         hemoglobin: hb,
-        t3: t3,
-        t4: t4,
+        tsh: tsh,
+        hba1c: hba1c,
         caseDescription: 'Patient presented for elective $procType. Comprehensive pre-operative clinical examination confirmed suitability for surgical intervention.',
       );
 

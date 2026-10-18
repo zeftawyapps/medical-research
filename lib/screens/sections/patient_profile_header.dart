@@ -10,6 +10,7 @@ class PatientProfileHeader extends StatelessWidget {
   final VoidCallback onFindPatient;
   final VoidCallback onNewPatient;
   final VoidCallback onChangePatient;
+  final VoidCallback? onEditPatient;
   final VoidCallback onAddOperation;
 
   const PatientProfileHeader({
@@ -20,6 +21,7 @@ class PatientProfileHeader extends StatelessWidget {
     required this.onFindPatient,
     required this.onNewPatient,
     required this.onChangePatient,
+    this.onEditPatient,
     required this.onAddOperation,
   });
 
@@ -277,6 +279,26 @@ class PatientProfileHeader extends StatelessWidget {
             spacing: 10,
             runSpacing: 8,
             children: [
+              if (onEditPatient != null)
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colorScheme.primary,
+                    side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: onEditPatient,
+                  icon: const Icon(Icons.edit_outlined, size: 15),
+                  label: const Text(
+                    'Edit Patient',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colorScheme.primary,

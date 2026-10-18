@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../theme/app_theme.dart';
 
 class IntakeSectionCard extends StatelessWidget {
   final String title;
@@ -18,13 +17,16 @@ class IntakeSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCard : Colors.white,
+        color: theme.cardTheme.color ?? colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          color: theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -32,14 +34,14 @@ class IntakeSectionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: AppTheme.primaryCyan),
+              Icon(icon, size: 20, color: colorScheme.primary),
               const SizedBox(width: 10),
               Text(
                 title,
                 style: GoogleFonts.inter(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ],

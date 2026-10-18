@@ -424,11 +424,18 @@ class SqlCaseQueryBuilder {
             WHERE _c.${ComplicationTable.columnOperationId} = $_tOp.${OperationTable.columnOperationId}
           ) THEN $_tOp.${OperationTable.columnOperationId}
         END) AS cases_with_complications,
-        AVG(CAST(
-          (julianday('now') - julianday(
-            json_extract($_tPat.${PatientTable.columnDemographics}, '\$.date_of_birth')
-          )) / 365.25
-        AS REAL)) AS mean_age,
+        AVG(
+          COALESCE(
+            CAST((julianday('now') - julianday(
+              COALESCE(
+                json_extract($_tPat.${PatientTable.columnDemographics}, '\$.date_of_birth'),
+                json_extract($_tPat.${PatientTable.columnDemographics}, '\$.dob'),
+                json_extract($_tPat.${PatientTable.columnDemographics}, '\$.birth_date')
+              )
+            )) / 365.25 AS REAL),
+            CAST(json_extract($_tPat.${PatientTable.columnDemographics}, '\$.age') AS REAL)
+          )
+        ) AS mean_age,
         COUNT(DISTINCT CASE
           WHEN $_tIntra.${IntraOpTable.columnIsGarmentRequired} = 1
           THEN $_tOp.${OperationTable.columnOperationId}

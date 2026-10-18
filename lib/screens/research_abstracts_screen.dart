@@ -38,6 +38,8 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
     BuildContext context,
     ResearchProvider provider,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final nameController = TextEditingController();
     final List<TemplateField> fields = [
       const TemplateField(
@@ -58,7 +60,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
       context: context,
       title: 'New Dynamic Research Template',
       icon: Icons.schema_rounded,
-      iconColor: AppTheme.accentIndigo,
+      iconColor: colorScheme.secondary,
       saveButtonText: 'Save Template',
       formBuilder: (ctx, setModalState) {
         return Column(
@@ -78,6 +80,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -91,7 +94,10 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                     Expanded(
                       child: Text(
                         '• ${f.fieldName} (${f.fieldType})',
-                        style: GoogleFonts.inter(fontSize: 12),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -145,6 +151,8 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
     BuildContext context,
     ResearchProvider provider,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final titleController = TextEditingController(
       text:
           'Comparative Outcomes & Complication Profile in ${provider.timeFrameFilteredCases.length} Surgical Research Cases',
@@ -154,7 +162,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
       context: context,
       title: 'Generate Research Abstract',
       icon: Icons.auto_awesome_rounded,
-      iconColor: AppTheme.primaryCyan,
+      iconColor: colorScheme.primary,
       saveButtonText: 'Synthesize & Save',
       formBuilder: (ctx, setModalState) {
         return Column(
@@ -163,7 +171,11 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
           children: [
             Text(
               'Auto-synthesize Background, Methods, Complication Rates, and Conclusions from currently filtered cases (${provider.timeFrameFilteredCases.length} records).',
-              style: GoogleFonts.inter(fontSize: 12.5, height: 1.4),
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                height: 1.4,
+                color: colorScheme.onSurface,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -193,7 +205,9 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final isMobile = ResponsiveLayout.isMobile(context);
 
     return Padding(
@@ -211,7 +225,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
             style: GoogleFonts.inter(
               fontSize: isMobile ? 18 : 22,
               fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 6),
@@ -221,9 +235,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
             'Build custom schemas and synthesize structured Markdown abstracts.',
             style: GoogleFonts.inter(
               fontSize: isMobile ? 12 : 13,
-              color: isDark
-                  ? AppTheme.darkTextSecondary
-                  : AppTheme.lightTextSecondary,
+              color: colorScheme.onSurface.withValues(alpha: 0.65),
             ),
           ),
           const SizedBox(height: 12),
@@ -239,8 +251,8 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                 icon: const Icon(Icons.schema_rounded, size: 15),
                 label: Text(isMobile ? 'Template' : 'New Template'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.accentIndigo,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colorScheme.secondary,
+                  foregroundColor: colorScheme.onSecondary,
                   padding: EdgeInsets.symmetric(
                     horizontal: isMobile ? 12 : 16,
                     vertical: 9,
@@ -253,8 +265,8 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                 icon: const Icon(Icons.auto_awesome_rounded, size: 15),
                 label: Text(isMobile ? 'Synthesize' : 'Auto-Generate Abstract'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryCyan,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: EdgeInsets.symmetric(
                     horizontal: isMobile ? 12 : 16,
                     vertical: 9,
@@ -270,11 +282,10 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
             controller: _tabController,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            indicatorColor: AppTheme.primaryCyan,
-            labelColor: AppTheme.primaryCyan,
-            unselectedLabelColor: isDark
-                ? AppTheme.darkTextSecondary
-                : AppTheme.lightTextSecondary,
+            indicatorColor: colorScheme.primary,
+            labelColor: colorScheme.primary,
+            unselectedLabelColor:
+                colorScheme.onSurface.withValues(alpha: 0.6),
             tabs: [
               Tab(text: 'Abstracts (${provider.abstracts.length})'),
               Tab(text: 'Templates (${provider.templates.length})'),
@@ -303,6 +314,9 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
     bool isDark,
     bool isMobile,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     if (provider.abstracts.isEmpty) {
       return const EmptyStateWidget(
         icon: Icons.article_outlined,
@@ -321,10 +335,12 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
           margin: const EdgeInsets.only(bottom: 12),
           padding: EdgeInsets.all(isMobile ? 14 : 18),
           decoration: BoxDecoration(
-            color: isDark ? AppTheme.darkCard : Colors.white,
+            color: theme.cardTheme.color ??
+                (isDark ? colorScheme.surface : Colors.white),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+              color: theme.dividerTheme.color ??
+                  colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -341,7 +357,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryCyan.withValues(alpha: 0.15),
+                          color: colorScheme.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -349,7 +365,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                           style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.primaryCyan,
+                            color: colorScheme.primary,
                           ),
                         ),
                       ),
@@ -358,9 +374,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                         DateFormat('MMM dd, yyyy').format(abst.createdAt),
                         style: GoogleFonts.inter(
                           fontSize: 11,
-                          color: isDark
-                              ? AppTheme.darkTextSecondary
-                              : AppTheme.lightTextSecondary,
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -400,7 +414,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                 style: GoogleFonts.inter(
                   fontSize: isMobile ? 14.5 : 16,
                   fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 10),
@@ -409,11 +423,12 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isDark
-                      ? const Color(0xFF090D16)
-                      : const Color(0xFFF1F5F9),
+                      ? Colors.black.withValues(alpha: 0.3)
+                      : colorScheme.surface.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                    color: theme.dividerTheme.color ??
+                        colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
                 child: SelectableText(
@@ -421,9 +436,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                   style: GoogleFonts.robotoMono(
                     fontSize: isMobile ? 11 : 12,
                     height: 1.5,
-                    color: isDark
-                        ? const Color(0xFFE2E8F0)
-                        : const Color(0xFF1E293B),
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -440,9 +453,8 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
     bool isDark,
     bool isMobile,
   ) {
-    if (provider.templates.length <= 1) {
-      // Empty or only default
-    }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -453,10 +465,12 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
           margin: const EdgeInsets.only(bottom: 12),
           padding: EdgeInsets.all(isMobile ? 14 : 18),
           decoration: BoxDecoration(
-            color: isDark ? AppTheme.darkCard : Colors.white,
+            color: theme.cardTheme.color ??
+                (isDark ? colorScheme.surface : Colors.white),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+              color: theme.dividerTheme.color ??
+                  colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -467,9 +481,9 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                 children: [
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.schema_rounded,
-                        color: AppTheme.accentIndigo,
+                        color: colorScheme.secondary,
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -478,9 +492,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                         style: GoogleFonts.inter(
                           fontSize: isMobile ? 14 : 16,
                           fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white
-                              : AppTheme.lightTextPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -491,7 +503,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.accentIndigo.withValues(alpha: 0.15),
+                      color: colorScheme.secondary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -499,7 +511,7 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                       style: GoogleFonts.inter(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.accentIndigo,
+                        color: colorScheme.secondary,
                       ),
                     ),
                   ),
@@ -513,10 +525,11 @@ class _ResearchAbstractsScreenState extends State<ResearchAbstractsScreen>
                   return Chip(
                     label: Text('${f.fieldName} (${f.fieldType})'),
                     backgroundColor: isDark
-                        ? const Color(0xFF0F172A)
-                        : const Color(0xFFE2E8F0),
+                        ? colorScheme.surface
+                        : colorScheme.outline.withValues(alpha: 0.1),
                     labelStyle: GoogleFonts.inter(
                       fontSize: isMobile ? 10.5 : 11.5,
+                      color: colorScheme.onSurface,
                     ),
                     padding: EdgeInsets.zero,
                   );

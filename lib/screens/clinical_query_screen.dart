@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/patient_record_brd.dart';
+import '../providers/research_provider.dart';
 import '../services/database/clinical_repository.dart';
+import '../services/export/clinical_export_service.dart';
 import '../services/search_engine/research_search_engine.dart';
 import '../services/search_engine/sql_query_builder.dart';
 import 'clinical_case_management_screen.dart';
@@ -32,12 +37,15 @@ class ClinicalQueryScreen extends StatefulWidget {
 
 class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
     with SingleTickerProviderStateMixin {
+  static const String prefLastTabIndexKey = 'clinical_query_last_tab_index';
+
   late final ClinicalRepository _repository;
   late final TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
   List<CompleteClinicalCase> _allCases = [];
   bool _isLoading = true;
+  int? _lastPersistedTabIndex;
 
   // Time Frame State (strictly filtering by Date of Operation)
   TimeFramePreset _selectedPreset = TimeFramePreset.allTime;
@@ -63,6 +71,9 @@ class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
     super.initState();
     _repository = widget.repository ?? ClinicalRepository();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
+
+    _restoreLastSavedTab();
 
     if (widget.initialCases != null) {
       _allCases = widget.initialCases!;
@@ -79,9 +90,56 @@ class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _restoreLastSavedTab() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedIndex = prefs.getInt(prefLastTabIndexKey);
+      if (savedIndex != null &&
+          savedIndex >= 0 &&
+          savedIndex < _tabController.length) {
+        _lastPersistedTabIndex = savedIndex;
+        if (mounted && _tabController.index != savedIndex) {
+          setState(() {
+            _tabController.index = savedIndex;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error restoring clinical query last tab index: $e');
+    }
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      final currentIndex = _tabController.index;
+      if (_lastPersistedTabIndex != currentIndex) {
+        _lastPersistedTabIndex = currentIndex;
+        _saveLastTabIndex(currentIndex);
+      }
+    }
+  }
+
+  Future<void> _saveLastTabIndex(int index) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(prefLastTabIndexKey, index);
+      if (mounted) {
+        try {
+          final provider = Provider.of<ResearchProvider>(context, listen: false);
+          if (provider.clinicalQueryTabIndex != index) {
+            provider.setClinicalQueryTabIndex(index);
+          }
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Error saving clinical query last tab index: $e');
+    }
   }
 
   // --- Data Loading ---
@@ -166,6 +224,197 @@ class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
         ),
         duration: Duration(milliseconds: 1800),
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// Exports all patient records & clinical cases to Excel (.xlsx)
+  Future<void> exportPatientsToExcel({bool filteredOnly = false}) async {
+    final casesToExport = filteredOnly
+        ? _cohortSearchResults.map((m) => m.clinicalCase).toList()
+        : _allCases;
+    if (casesToExport.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No patient records available to export.'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.hourglass_top_rounded, color: Colors.tealAccent, size: 18),
+                const SizedBox(width: 12),
+                Text(filteredOnly
+                    ? 'Exporting ${casesToExport.length} filtered cases to Excel (.xlsx)...'
+                    : 'Exporting comprehensive data to Excel (.xlsx)...'),
+              ],
+            ),
+            duration: const Duration(milliseconds: 1500),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+
+      final file = await ClinicalExportService.exportToExcel(casesToExport);
+      if (mounted) {
+        _showExportSuccessDialog('Excel (.xlsx)', file.path, casesToExport.length);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to export Excel: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Exports all patient records & clinical cases to CSV (.csv)
+  Future<void> exportPatientsToCsv({bool filteredOnly = false}) async {
+    final casesToExport = filteredOnly
+        ? _cohortSearchResults.map((m) => m.clinicalCase).toList()
+        : _allCases;
+    if (casesToExport.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No patient records available to export.'),
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.hourglass_top_rounded, color: Colors.tealAccent, size: 18),
+                const SizedBox(width: 12),
+                Text(filteredOnly
+                    ? 'Exporting ${casesToExport.length} filtered cases to CSV (.csv)...'
+                    : 'Exporting comprehensive data to CSV (.csv)...'),
+              ],
+            ),
+            duration: const Duration(milliseconds: 1500),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+
+      final file = await ClinicalExportService.exportToCsv(casesToExport);
+      if (mounted) {
+        _showExportSuccessDialog('CSV (.csv)', file.path, casesToExport.length);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to export CSV: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showExportSuccessDialog(String formatName, String filePath, int count) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.teal.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.check_circle_rounded, color: Colors.teal, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Data Export Complete',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Successfully exported $count complete patient case records to $formatName with full clinical details.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'File saved at:',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+              ),
+              child: SelectableText(
+                filePath,
+                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.copy_rounded, size: 16),
+            label: const Text('Copy File Path'),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: filePath));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('File path copied to clipboard!'),
+                  duration: Duration(milliseconds: 1500),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+              Navigator.pop(ctx);
+            },
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
@@ -462,6 +711,18 @@ class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
 
   /// Trigger async SQL analytics refresh
   void _refreshAnalytics() {
+    if (widget.initialCases != null && widget.repository == null) {
+      final timeFiltered = ResearchSearchEngine.filterByTimeFrame(
+        _allCases,
+        preset: _selectedPreset,
+        customRange: _effectiveCustomDateRange,
+      );
+      if (mounted) {
+        setState(() => _cachedStats = ResearchSearchEngine.calculateStats(timeFiltered));
+      }
+      return;
+    }
+
     final criteria = _buildSqlCriteria();
     _repository.getAnalyticsStatsSql(criteria).then((stats) {
       if (mounted) {
@@ -493,6 +754,30 @@ class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
 
   /// Trigger async SQL search refresh
   void _refreshSearch() {
+    if (widget.initialCases != null && widget.repository == null) {
+      var cases = ResearchSearchEngine.filterByTimeFrame(
+        _allCases, preset: _selectedPreset, customRange: _effectiveCustomDateRange,
+      );
+      cases = ResearchSearchEngine.filterByPod(cases, _selectedPodFilter);
+      if (_complicationsOnly) {
+        cases = cases.where((c) => c.hasComplications).toList();
+      }
+      final filteredCases = ResearchSearchEngine.filterByAdvancedCriteria(cases, _advancedCriteria);
+      if (mounted) {
+        setState(() {
+          _cachedSearchResults = ResearchSearchEngine.searchAllFields(
+            filteredCases,
+            _searchQuery,
+            patientNameQuery: _advancedCriteria.patientNameQuery,
+            medicalHistoryQuery: _advancedCriteria.medicalHistoryQuery,
+            operativeProcedureQuery: _advancedCriteria.operativeProcedureQuery,
+            procedureTechniqueQuery: _advancedCriteria.procedureTechniqueQuery,
+          );
+        });
+      }
+      return;
+    }
+
     final criteria = _buildSqlCriteria(includeSearchQuery: true);
     _repository.searchCasesSql(criteria, _allCases).then((filteredCases) {
       if (mounted) {
@@ -517,10 +802,11 @@ class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
       if (_complicationsOnly) {
         cases = cases.where((c) => c.hasComplications).toList();
       }
+      final filteredCases = ResearchSearchEngine.filterByAdvancedCriteria(cases, _advancedCriteria);
       if (mounted) {
         setState(() {
           _cachedSearchResults = ResearchSearchEngine.searchAllFields(
-            cases,
+            filteredCases,
             _searchQuery,
             patientNameQuery: _advancedCriteria.patientNameQuery,
             medicalHistoryQuery: _advancedCriteria.medicalHistoryQuery,
@@ -540,6 +826,108 @@ class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Clinical Query & Research Search',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Advanced Search & Filter',
+            icon: Icon(
+              Icons.tune_rounded,
+              color: isAdvancedFilterActive ? Colors.amberAccent : null,
+            ),
+            onPressed: openAdvancedSearchDialog,
+          ),
+          IconButton(
+            tooltip: 'Refresh Cases',
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: refreshCases,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            tooltip: 'Export & Options',
+            onSelected: (val) {
+              if (val == 'export_excel') {
+                exportPatientsToExcel();
+              } else if (val == 'export_csv') {
+                exportPatientsToCsv();
+              } else if (val == 'advanced_filter') {
+                openAdvancedSearchDialog();
+              } else if (val == 'refresh') {
+                refreshCases();
+              } else if (val == 'reset_filters') {
+                _resetAllFilters();
+              }
+            },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem<String>(
+                value: 'export_excel',
+                child: Row(
+                  children: [
+                    Icon(Icons.table_view_rounded, color: Colors.green, size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Export to Excel (.xlsx)', softWrap: false),
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'export_csv',
+                child: Row(
+                  children: [
+                    Icon(Icons.description_outlined, color: Colors.blueAccent, size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Export to CSV (.csv)', softWrap: false),
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(
+                value: 'advanced_filter',
+                child: Row(
+                  children: [
+                    Icon(Icons.tune_rounded, size: 18),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Advanced Filter', softWrap: false),
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'refresh',
+                child: Row(
+                  children: [
+                    Icon(Icons.refresh_rounded, size: 18),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Refresh Cases', softWrap: false),
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'reset_filters',
+                child: Row(
+                  children: [
+                    Icon(Icons.filter_alt_off_rounded, color: Colors.redAccent, size: 18),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Reset All Filters', softWrap: false),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -631,6 +1019,8 @@ class ClinicalQueryScreenState extends State<ClinicalQueryScreen>
                           },
                           onResetAllFilters: _resetAllFilters,
                           onPickCustomDateRange: _pickCustomDateRange,
+                          onExportExcel: () => exportPatientsToExcel(filteredOnly: true),
+                          onExportCsv: () => exportPatientsToCsv(filteredOnly: true),
                         ),
                       ],
                     ),

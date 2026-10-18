@@ -17,15 +17,20 @@ class TimeFrameFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondary = colorScheme.onSurfaceVariant;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCard : Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          color: borderColor,
           width: 1,
         ),
       ),
@@ -39,25 +44,25 @@ class TimeFrameFilterBar extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.date_range_rounded, size: 16, color: AppTheme.primaryCyan),
+                    Icon(Icons.date_range_rounded, size: 16, color: colorScheme.primary),
                     const SizedBox(width: 6),
                     Text(
                       'Time Frame: ',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(width: 8),
-                _buildPresetChip(context, provider, 'All Time', TimeFramePreset.allTime, isDark),
-                _buildPresetChip(context, provider, 'Last 7 Days', TimeFramePreset.last7Days, isDark),
-                _buildPresetChip(context, provider, 'Last 30 Days', TimeFramePreset.last30Days, isDark),
-                _buildPresetChip(context, provider, 'Last 90 Days', TimeFramePreset.last90Days, isDark),
-                _buildPresetChip(context, provider, 'Last 1 Year', TimeFramePreset.lastYear, isDark),
-                _buildCustomDateChip(context, provider, isDark),
+                _buildPresetChip(context, provider, 'All Time', TimeFramePreset.allTime),
+                _buildPresetChip(context, provider, 'Last 7 Days', TimeFramePreset.last7Days),
+                _buildPresetChip(context, provider, 'Last 30 Days', TimeFramePreset.last30Days),
+                _buildPresetChip(context, provider, 'Last 90 Days', TimeFramePreset.last90Days),
+                _buildPresetChip(context, provider, 'Last 1 Year', TimeFramePreset.lastYear),
+                _buildCustomDateChip(context, provider),
               ],
             ),
           ),
@@ -74,24 +79,28 @@ class TimeFrameFilterBar extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.timelapse_rounded, size: 16, color: AppTheme.alertAmber),
+                      Icon(
+                        Icons.timelapse_rounded,
+                        size: 16,
+                        color: isDark ? AppTheme.alertAmber : AppTheme.alertAmberDarkText,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'Post-Op Day (POD): ',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                          color: textSecondary,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(width: 8),
-                  _buildPodChip(context, provider, 'All PODs', PodFilter.allPod, isDark),
-                  _buildPodChip(context, provider, 'POD 0 - 3 (Acute)', PodFilter.pod0To3, isDark),
-                  _buildPodChip(context, provider, 'POD 4 - 7 (Early)', PodFilter.pod4To7, isDark),
-                  _buildPodChip(context, provider, 'POD 8 - 30 (Subacute)', PodFilter.pod8To30, isDark),
-                  _buildPodChip(context, provider, 'POD > 30 (Late)', PodFilter.pod30Plus, isDark),
+                  _buildPodChip(context, provider, 'All PODs', PodFilter.allPod),
+                  _buildPodChip(context, provider, 'POD 0 - 3 (Acute)', PodFilter.pod0To3),
+                  _buildPodChip(context, provider, 'POD 4 - 7 (Early)', PodFilter.pod4To7),
+                  _buildPodChip(context, provider, 'POD 8 - 30 (Subacute)', PodFilter.pod8To30),
+                  _buildPodChip(context, provider, 'POD > 30 (Late)', PodFilter.pod30Plus),
                 ],
               ),
             ),
@@ -106,9 +115,13 @@ class TimeFrameFilterBar extends StatelessWidget {
     ResearchProvider provider,
     String label,
     TimeFramePreset preset,
-    bool isDark,
   ) {
     final isSelected = provider.timeFramePreset == preset;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
+    final unselectedBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
 
     return Padding(
       padding: const EdgeInsets.only(right: 6),
@@ -116,29 +129,32 @@ class TimeFrameFilterBar extends StatelessWidget {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => provider.setTimeFramePreset(preset),
-        selectedColor: AppTheme.primaryCyan.withValues(alpha: 0.2),
+        selectedColor: colorScheme.primary.withValues(alpha: 0.2),
         labelStyle: GoogleFonts.inter(
           fontSize: 11.5,
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected
-              ? AppTheme.primaryCyan
-              : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+          color: isSelected ? colorScheme.primary : textSecondary,
         ),
-        backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+        backgroundColor: unselectedBg,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(
-            color: isSelected
-                ? AppTheme.primaryCyan
-                : (isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+            color: isSelected ? colorScheme.primary : borderColor,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCustomDateChip(BuildContext context, ResearchProvider provider, bool isDark) {
+  Widget _buildCustomDateChip(BuildContext context, ResearchProvider provider) {
     final isSelected = provider.timeFramePreset == TimeFramePreset.customRange;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
+    final unselectedBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final accent = colorScheme.secondary;
+
     final rangeText = provider.customDateRange != null
         ? '${DateFormat('MM/dd').format(provider.customDateRange!.start)} - ${DateFormat('MM/dd').format(provider.customDateRange!.end)}'
         : 'Custom Range...';
@@ -149,7 +165,7 @@ class TimeFrameFilterBar extends StatelessWidget {
         avatar: Icon(
           Icons.calendar_month_outlined,
           size: 14,
-          color: isSelected ? AppTheme.accentIndigo : null,
+          color: isSelected ? accent : null,
         ),
         label: Text(rangeText),
         onPressed: () async {
@@ -171,21 +187,17 @@ class TimeFrameFilterBar extends StatelessWidget {
           }
         },
         backgroundColor: isSelected
-            ? AppTheme.accentIndigo.withValues(alpha: 0.2)
-            : (isDark ? AppTheme.darkSurface : AppTheme.lightBackground),
+            ? accent.withValues(alpha: 0.2)
+            : unselectedBg,
         labelStyle: GoogleFonts.inter(
           fontSize: 11.5,
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected
-              ? AppTheme.accentIndigo
-              : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+          color: isSelected ? accent : textSecondary,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(
-            color: isSelected
-                ? AppTheme.accentIndigo
-                : (isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+            color: isSelected ? accent : borderColor,
           ),
         ),
       ),
@@ -197,9 +209,15 @@ class TimeFrameFilterBar extends StatelessWidget {
     ResearchProvider provider,
     String label,
     PodFilter filter,
-    bool isDark,
   ) {
     final isSelected = provider.podFilter == filter;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
+    final textSecondary = colorScheme.onSurfaceVariant;
+    final unselectedBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final podActiveColor = isDark ? AppTheme.alertAmber : AppTheme.alertAmberDarkText;
 
     return Padding(
       padding: const EdgeInsets.only(right: 6),
@@ -207,21 +225,17 @@ class TimeFrameFilterBar extends StatelessWidget {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => provider.setPodFilter(filter),
-        selectedColor: AppTheme.alertAmber.withValues(alpha: 0.2),
+        selectedColor: (isDark ? AppTheme.alertAmber : const Color(0xFFD97706)).withValues(alpha: isDark ? 0.22 : 0.14),
         labelStyle: GoogleFonts.inter(
           fontSize: 11.5,
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected
-              ? AppTheme.alertAmber
-              : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+          color: isSelected ? podActiveColor : textSecondary,
         ),
-        backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+        backgroundColor: unselectedBg,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(
-            color: isSelected
-                ? AppTheme.alertAmber
-                : (isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+            color: isSelected ? podActiveColor : borderColor,
           ),
         ),
       ),

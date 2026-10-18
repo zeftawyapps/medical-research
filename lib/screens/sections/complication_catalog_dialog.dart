@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/complication_catalog_model.dart';
 import '../../services/database/clinical_repository.dart';
-import '../../theme/app_theme.dart';
 
 /// Dialog to view, search, manage, and add complications to the Master Complications Catalog
 void showComplicationCatalogDialog(BuildContext context, bool isDark) {
@@ -342,19 +341,17 @@ class _ComplicationCatalogDialogState
                                 const SizedBox(height: 10),
                             itemBuilder: (ctx, index) {
                               final comp = filtered[index];
-                              return Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: widget.isDark
-                                      ? AppTheme.darkCard
-                                      : const Color(0xFFF8FAFC),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: widget.isDark
-                                        ? AppTheme.darkBorder
-                                        : Colors.grey.shade300,
+                                final theme = Theme.of(context);
+                                final colorScheme = theme.colorScheme;
+                                return Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: theme.cardTheme.color ?? colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.2),
+                                    ),
                                   ),
-                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [

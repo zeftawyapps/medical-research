@@ -26,9 +26,7 @@ class _CaseIntakeFormScreenState extends State<CaseIntakeFormScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Patient Controllers
-  final _mrnController = TextEditingController(
-    text: 'MRN-2026-${1000 + DateTime.now().millisecond}',
-  );
+  final _mrnController = TextEditingController();
   final _nameController = TextEditingController();
   DateTime? _dob = DateTime(1985, 5, 20);
   final _dobController = TextEditingController(text: '1985-05-20');
@@ -69,6 +67,40 @@ class _CaseIntakeFormScreenState extends State<CaseIntakeFormScreen> {
   final _surveyAnsController = TextEditingController(
     text: 'Score: 2/10, Good Mobility',
   );
+
+  @override
+  void initState() {
+    super.initState();
+    _initSequentialMRN();
+  }
+
+  void _initSequentialMRN() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final provider = context.read<ResearchProvider>();
+        final year = DateTime.now().year;
+        int maxNum = 0;
+        final regex = RegExp(r'MRN-\d{4}-(\d+)', caseSensitive: false);
+        for (final p in provider.patients) {
+          final m = regex.firstMatch(p.medicalRecordNumber);
+          if (m != null) {
+            final n = int.tryParse(m.group(1) ?? '0') ?? 0;
+            if (n > maxNum) maxNum = n;
+          }
+        }
+        int candidateIndex = maxNum + 1;
+        if (candidateIndex <= provider.patients.length) candidateIndex = provider.patients.length + 1;
+        String candidateMrn = 'MRN-$year-${candidateIndex.toString().padLeft(4, '0')}';
+        while (provider.patients.any((p) => p.medicalRecordNumber.trim().toUpperCase() == candidateMrn.toUpperCase())) {
+          candidateIndex++;
+          candidateMrn = 'MRN-$year-${candidateIndex.toString().padLeft(4, '0')}';
+        }
+        setState(() {
+          _mrnController.text = candidateMrn;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -201,7 +233,9 @@ class _CaseIntakeFormScreenState extends State<CaseIntakeFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
 
     return Scaffold(
@@ -218,9 +252,9 @@ class _CaseIntakeFormScreenState extends State<CaseIntakeFormScreen> {
         actions: [
           IconButton(
             tooltip: 'Save Record to SQLite',
-            icon: const Icon(
+            icon: Icon(
               Icons.check_circle_rounded,
-              color: AppTheme.primaryCyan,
+              color: colorScheme.primary,
               size: 24,
             ),
             onPressed: _saveCase,

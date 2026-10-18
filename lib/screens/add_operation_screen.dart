@@ -3,7 +3,6 @@ import 'package:uuid/uuid.dart';
 
 import '../models/patient_record_brd.dart';
 import '../services/database/clinical_repository.dart';
-import '../theme/app_theme.dart';
 
 /// Dedicated screen for adding a new surgical operation to a patient
 /// Allows selecting from previously recorded procedures or typing a new procedure
@@ -134,13 +133,13 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final patient = widget.patient;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppTheme.darkBackground
-          : const Color(0xFFF8FAFC),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(
           'Add New Surgical Operation',
@@ -161,12 +160,10 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? AppTheme.darkCard : Colors.white,
+                      color: theme.cardTheme.color ?? (isDark ? colorScheme.surface : Colors.white),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark
-                            ? AppTheme.darkBorder
-                            : Colors.teal.shade100,
+                        color: theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Column(
@@ -176,12 +173,12 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
                           children: [
                             CircleAvatar(
                               radius: 18,
-                              backgroundColor: Colors.teal.withValues(
+                              backgroundColor: colorScheme.primary.withValues(
                                 alpha: 0.15,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.person,
-                                color: Colors.teal,
+                                color: colorScheme.primary,
                                 size: 20,
                               ),
                             ),
@@ -202,9 +199,7 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
                           'MRN: ${patient.medicalRecordNumber} • Age: ${patient.age} yrs • Gender: ${patient.gender}',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark
-                                ? Colors.white60
-                                : Colors.grey.shade600,
+                            color: colorScheme.onSurface.withValues(alpha: 0.65),
                           ),
                         ),
                       ],
@@ -216,12 +211,11 @@ class _AddOperationScreenState extends State<AddOperationScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: isDark ? AppTheme.darkCard : Colors.white,
+                      color: theme.cardTheme.color ?? (isDark ? colorScheme.surface : Colors.white),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isDark
-                            ? AppTheme.darkBorder
-                            : Colors.grey.shade200,
+                        color: theme.dividerTheme.color ??
+                            colorScheme.outline.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Column(

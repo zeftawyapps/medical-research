@@ -40,7 +40,9 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final searchResults = provider.searchResults;
     final stats = provider.activeStats;
@@ -59,14 +61,19 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0C1B33), Color(0xFF132A4F)],
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF0C1B33), const Color(0xFF132A4F)]
+                      : [
+                          colorScheme.primary.withValues(alpha: 0.15),
+                          colorScheme.surface,
+                        ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: AppTheme.primaryCyan.withValues(alpha: 0.3),
+                  color: colorScheme.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -78,12 +85,12 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryCyan.withValues(alpha: 0.15),
+                          color: colorScheme.primary.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.manage_search_rounded,
-                          color: AppTheme.primaryCyan,
+                          color: colorScheme.primary,
                           size: 18,
                         ),
                       ),
@@ -94,7 +101,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: isDark ? Colors.white : colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -106,7 +113,9 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                     'Multi-field search across MRN, Radiology, Notes, and Labs.',
                     style: GoogleFonts.inter(
                       fontSize: 11.5,
-                      color: AppTheme.darkTextSecondary,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -134,7 +143,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                   context,
                   'MATCHES',
                   '${searchResults.length}',
-                  AppTheme.primaryCyan,
+                  colorScheme.primary,
                   isDark,
                 ),
                 const SizedBox(width: 8),
@@ -150,7 +159,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                   context,
                   'MEAN AGE',
                   '${stats.meanAge.toStringAsFixed(1)} y',
-                  AppTheme.accentIndigo,
+                  colorScheme.secondary,
                   isDark,
                 ),
               ],
@@ -192,14 +201,19 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0C1B33), Color(0xFF132A4F)],
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [const Color(0xFF0C1B33), const Color(0xFF132A4F)]
+                    : [
+                        colorScheme.primary.withValues(alpha: 0.12),
+                        colorScheme.surface,
+                      ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppTheme.primaryCyan.withValues(alpha: 0.3),
+                color: colorScheme.primary.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
@@ -207,12 +221,12 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryCyan.withValues(alpha: 0.15),
+                    color: colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.manage_search_rounded,
-                    color: AppTheme.primaryCyan,
+                    color: colorScheme.primary,
                     size: 24,
                   ),
                 ),
@@ -226,14 +240,16 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                          color: isDark ? Colors.white : colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         'Full-text multi-field scanning across MRN, Pre-Op Radiology, Surgical notes, POD Complications, and Labs.',
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          color: AppTheme.darkTextSecondary,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.7)
+                              : colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -268,9 +284,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? AppTheme.darkTextSecondary
-                        : AppTheme.lightTextSecondary,
+                    color: colorScheme.onSurface.withValues(alpha: 0.65),
                   ),
                 ),
                 ..._quickSearchTags.map((tag) {
@@ -282,21 +296,17 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                         _searchController.text = tag;
                         provider.setSearchQuery(tag);
                       },
-                      backgroundColor: isDark
-                          ? AppTheme.darkCard
-                          : Colors.white,
+                      backgroundColor: theme.cardTheme.color ??
+                          (isDark ? colorScheme.surface : Colors.white),
                       labelStyle: GoogleFonts.inter(
                         fontSize: 11.5,
-                        color: isDark
-                            ? AppTheme.darkTextSecondary
-                            : AppTheme.lightTextSecondary,
+                        color: colorScheme.onSurface.withValues(alpha: 0.75),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                         side: BorderSide(
-                          color: isDark
-                              ? AppTheme.darkBorder
-                              : AppTheme.lightBorder,
+                          color: theme.dividerTheme.color ??
+                              colorScheme.outline.withValues(alpha: 0.2),
                         ),
                       ),
                     ),
@@ -314,7 +324,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                 context,
                 'MATCHED SURGERIES',
                 '${searchResults.length}',
-                AppTheme.primaryCyan,
+                colorScheme.primary,
                 isDark,
               ),
               const SizedBox(width: 10),
@@ -330,7 +340,7 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
                 context,
                 'MEAN PATIENT AGE',
                 '${stats.meanAge.toStringAsFixed(1)} yrs',
-                AppTheme.accentIndigo,
+                colorScheme.secondary,
                 isDark,
               ),
             ],
@@ -394,11 +404,15 @@ class _UniversalSearchScreenState extends State<UniversalSearchScreen> {
     Color color,
     bool isDark,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkCard : Colors.white,
+          color: theme.cardTheme.color ??
+              (isDark ? colorScheme.surface : Colors.white),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: color.withValues(alpha: 0.3)),
         ),

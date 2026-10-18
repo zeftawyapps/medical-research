@@ -1,13 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:medecat_research/models/patient_record_brd.dart';
 import 'package:medecat_research/providers/research_provider.dart';
 import 'package:medecat_research/screens/clinical_query_screen.dart';
 import 'package:medecat_research/screens/clinical_query/models/clinical_query_models.dart';
 import 'package:medecat_research/services/search_engine/research_search_engine.dart';
 
+/// ============================================================================
+/// 🧪 ClinicalQueryScreen Test Suite (مجموعة اختبارات شاشة الاستعلام السريري والبحث)
+/// 
+/// تغطي هذه المجموعة:
+/// 1. بناء واجهة شاشة الاستعلام وعرض التابات الثنائية (Analytics Dashboard & Cohort Search).
+/// 2. فحص محرك النطاق الزمني والفلترة بين الحالات (Between Cases Date Selector).
+/// 3. التحقق من عدم حدوث تجاوز في أبعاد الشاشة عند عرض درجات المضاعفات الطويلة (320px).
+/// 4. اختبار الفلترة المتقدمة (BMI, Medical History LIKE, Fat Volume).
+/// 5. اختبار حفظ رقم التاب الأخير في SharedPreferences واستعادته تلقائياً عند الدخول.
+/// ============================================================================
+
 void main() {
+  /// --------------------------------------------------------------------------
+  /// 📋 Test 1:
+  /// التحقق من رسم التابات الثنائية ومؤشرات الـ KPIs وزر إضافة مريض جديد (FAB)
+  /// وفحص التبديل بين Analytics Dashboard و Cohort Search
+  /// --------------------------------------------------------------------------
   testWidgets(
     'ClinicalQueryScreen renders dual tabs, KPI cards, and FloatingActionButton',
     (WidgetTester tester) async {
@@ -500,6 +517,100 @@ void main() {
       expect(find.text('Fatima Al-Sayed'), findsNothing);
       expect(find.text('Omar Khaled'), findsNothing);
       expect(find.text('Fat: 2.0 - 5.0 L'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ClinicalQueryScreen switching from tab 1 to tab 2 records index 1 to SharedPreferences',
+    (WidgetTester tester) async {
+      SharedPreferences.setMockInitialValues({'clinical_query_last_tab_index': 0});
+      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final now = DateTime.now();
+      final sampleCase = CompleteClinicalCase(
+        patient: PatientModel(
+          patientId: 'p-tab-1',
+          medicalRecordNumber: 'MRN-TAB-1',
+          demographics: {'name': 'Tab Test Patient', 'gender': 'Female', 'age': 28},
+          createdAt: now,
+        ),
+        operation: OperationModel(
+          operationId: 'op-tab-1',
+          patientId: 'p-tab-1',
+          diagnosisDetails: 'Test Details',
+          operationType: 'Test Procedure',
+          createdAt: now,
+        ),
+      );
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (_) => ResearchProvider(),
+          child: MaterialApp(
+            home: ClinicalQueryScreen(initialCases: [sampleCase]),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Initially on Tab 1 (Analytics Dashboard)
+      expect(find.text('Analytics Dashboard'), findsOneWidget);
+      expect(find.text('Total Cases'), findsOneWidget);
+
+      // Switch to Tab 2 (Cohort Search & Cases)
+      await tester.tap(find.text('Cohort Search & Cases'));
+      await tester.pumpAndSettle();
+
+      // Verify that SharedPreferences received tab index = 1
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getInt('clinical_query_last_tab_index'), equals(1));
+    },
+  );
+
+  testWidgets(
+    'ClinicalQueryScreen automatically opens on the last opened tab saved in SharedPreferences',
+    (WidgetTester tester) async {
+      // Pre-set saved tab index to 1 (Cohort Search & Cases)
+      SharedPreferences.setMockInitialValues({'clinical_query_last_tab_index': 1});
+      tester.view.physicalSize = const Size(1200, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final now = DateTime.now();
+      final sampleCase = CompleteClinicalCase(
+        patient: PatientModel(
+          patientId: 'p-tab-2',
+          medicalRecordNumber: 'MRN-TAB-2',
+          demographics: {'name': 'Auto Restored Patient', 'gender': 'Male', 'age': 35},
+          createdAt: now,
+        ),
+        operation: OperationModel(
+          operationId: 'op-tab-2',
+          patientId: 'p-tab-2',
+          diagnosisDetails: 'Auto Restore Details',
+          operationType: 'Auto Restore Surgery',
+          createdAt: now,
+        ),
+      );
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (_) => ResearchProvider(),
+          child: MaterialApp(
+            home: ClinicalQueryScreen(initialCases: [sampleCase]),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Should automatically navigate to Tab 2 (Cohort Search & Cases)
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text('Complications Only'), findsOneWidget);
+      expect(find.text('Auto Restored Patient'), findsOneWidget);
     },
   );
 }

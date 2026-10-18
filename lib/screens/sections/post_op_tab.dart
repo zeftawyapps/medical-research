@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/complication_model.dart';
 import '../../models/operation_model.dart';
-import '../../theme/app_theme.dart';
 import '../../widgets/complications_list_widget.dart';
 import '../../widgets/medical_image_gallery_widget.dart';
 
@@ -36,16 +35,19 @@ class PostOpTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     if (selectedOperation == null) {
       return Center(
         child: Container(
           padding: const EdgeInsets.all(24),
           margin: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: isDark ? AppTheme.darkCard : Colors.white,
+            color: theme.cardTheme.color ?? colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? AppTheme.darkBorder : Colors.grey.shade200,
+              color: theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -69,8 +71,8 @@ class PostOpTab extends StatelessWidget {
                 icon: const Icon(Icons.arrow_back_rounded, size: 16),
                 label: const Text('Go to Operations Tab'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
                 ),
               ),
             ],
@@ -152,8 +154,8 @@ class PostOpTab extends StatelessWidget {
           Center(
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal.shade700,
-                foregroundColor: Colors.white,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 36,
                   vertical: 14,

@@ -4,9 +4,23 @@ import 'package:medecat_research/services/database/clinical_repository.dart';
 import 'package:medecat_research/services/database/repositories/patient_repository.dart';
 import 'package:medecat_research/services/search_engine/research_search_engine.dart';
 
+/// ============================================================================
+/// 🧪 Database & Repository Integration Test Suite (اختبارات قاعدة البيانات والمستودعات)
+/// 
+/// تغطي هذه المجموعة:
+/// 1. عمليات CRUD الأساسية لجدول المرضى (Insert, GetById, GetByMRN, Update, Delete) عبر [PatientRepository].
+/// 2. عمليات الإدراج والاسترجاع الشاملة للحالة السريرية التجميعية [CompleteClinicalCase] عبر [ClinicalRepository].
+/// 3. فحص محرك البحث الزمني [ResearchSearchEngine.filterByTimeFrame] (Last 7 Days, Last 30 Days, Last Year).
+/// 4. فحص محرك البحث الشامل متعدد الحقول [ResearchSearchEngine.searchAllFields].
+/// ============================================================================
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  /// --------------------------------------------------------------------------
+  /// 📋 Test 1:
+  /// اختبار عمليات CRUD لجدول المرضى (إضافة، استرجاع، تعديل، حذف)
+  /// --------------------------------------------------------------------------
   test('Database - Generic CRUD operations via PatientRepository', () async {
     final patientRepo = PatientRepository();
     final now = DateTime.now();

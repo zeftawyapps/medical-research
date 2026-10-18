@@ -80,6 +80,8 @@ class PatientModel extends DataModel {
   String get bloodGroup => demographics['blood_group']?.toString() ?? 'N/A';
   String get phone => demographics['phone']?.toString() ?? 'N/A';
   String get country => demographics['country']?.toString() ?? '';
+  String? get bmi => demographics['bmi']?.toString();
+  String? get asaScore => demographics['asa_score']?.toString();
   String get notes => demographics['notes']?.toString() ?? '';
 
   @override

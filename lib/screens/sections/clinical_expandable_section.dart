@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
 
 class ClinicalExpandableSection extends StatelessWidget {
   final bool isDark;
@@ -21,23 +20,28 @@ class ClinicalExpandableSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 6),
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCard : Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? AppTheme.darkBorder : Colors.grey.shade200,
+          color: borderColor,
         ),
       ),
       child: ExpansionTile(
         key: ValueKey('$title-$initiallyExpanded'),
         initiallyExpanded: initiallyExpanded,
         onExpansionChanged: onExpansionChanged,
-        leading: Icon(icon, color: Colors.teal),
+        leading: Icon(icon, color: colorScheme.primary),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colorScheme.onSurface),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         collapsedShape: RoundedRectangleBorder(

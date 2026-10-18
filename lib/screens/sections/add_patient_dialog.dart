@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
@@ -8,33 +7,37 @@ import '../../services/database/clinical_repository.dart';
 import '../../theme/responsive_layout.dart';
 import '../../widgets/country_picker_field.dart';
 
-/// Opens the Add New Patient dialog in a modal window.
+/// Opens the Add / Edit Patient dialog in a modal window.
 Future<PatientModel?> openAddPatientDialog({
   required BuildContext context,
   required ClinicalRepository repository,
   required List<PatientModel> existingPatients,
-  Future<void> Function(PatientModel newPatient)? onPatientAdded,
+  PatientModel? initialPatient,
+  Future<void> Function(PatientModel savedPatient)? onPatientAdded,
 }) {
   return showDialog<PatientModel>(
     context: context,
     builder: (ctx) => AddPatientDialog(
       repository: repository,
       existingPatients: existingPatients,
+      initialPatient: initialPatient,
       onPatientAdded: onPatientAdded,
     ),
   );
 }
 
-/// Standalone Add Patient Dialog with auto MRN, DOB picker, calculated age, and Wrap layout.
+/// Standalone Add / Edit Patient Dialog with auto MRN, DOB picker, calculated age, and Wrap layout.
 class AddPatientDialog extends StatefulWidget {
   final ClinicalRepository repository;
   final List<PatientModel> existingPatients;
-  final Future<void> Function(PatientModel newPatient)? onPatientAdded;
+  final PatientModel? initialPatient;
+  final Future<void> Function(PatientModel savedPatient)? onPatientAdded;
 
   const AddPatientDialog({
     super.key,
     required this.repository,
     required this.existingPatients,
+    this.initialPatient,
     this.onPatientAdded,
   });
 
@@ -48,18 +51,32 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
   late final TextEditingController _phoneController;
   late final TextEditingController _notesController;
 
-  DateTime _dob = DateTime(1995, 5, 20);
+  late DateTime _dob;
   String _gender = 'Female';
   String? _country;
   bool _isSaving = false;
 
+  bool get isEditing => widget.initialPatient != null;
+
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController();
-    _mrnController = TextEditingController(text: _generateUniqueMRN());
-    _phoneController = TextEditingController();
-    _notesController = TextEditingController();
+    final p = widget.initialPatient;
+    _nameController = TextEditingController(text: p?.name ?? '');
+    _mrnController = TextEditingController(
+      text: p?.medicalRecordNumber ?? _generateInitialMRN(),
+    );
+    _phoneController = TextEditingController(text: p?.phone ?? '');
+    _notesController = TextEditingController(text: p?.notes ?? '');
+
+    if (p != null) {
+      _gender = p.gender.isNotEmpty ? p.gender : 'Female';
+      _country = p.country.isNotEmpty ? p.country : null;
+      _dob = DateTime.tryParse(p.dateOfBirth ?? '') ?? DateTime(1995, 5, 20);
+    } else {
+      _dob = DateTime(1995, 5, 20);
+      _loadDbMRN();
+    }
   }
 
   @override
@@ -71,24 +88,50 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
     super.dispose();
   }
 
-  // Generate a guaranteed unique Medical Record Number (MRN)
-  String _generateUniqueMRN() {
+  // Generate initial candidate MRN
+  String _generateInitialMRN() {
     final now = DateTime.now();
     final year = now.year;
     final index = widget.existingPatients.length + 1;
-    String candidate = 'MRN-$year-${index.toString().padLeft(4, '0')}';
+    return 'MRN-$year-${index.toString().padLeft(4, '0')}';
+  }
 
-    int attempt = 1;
-    while (widget.existingPatients.any(
-      (p) =>
-          p.medicalRecordNumber.trim().toUpperCase() == candidate.toUpperCase(),
-    )) {
-      final rand = Random().nextInt(9000) + 1000;
-      candidate =
-          'MRN-$year-${(index + attempt).toString().padLeft(4, '0')}-$rand';
-      attempt++;
-    }
-    return candidate;
+  // Asynchronously query SQLite database to get exact next sequential MRN
+  Future<void> _loadDbMRN() async {
+    try {
+      final allPatients = await widget.repository.getAllPatients();
+      final year = DateTime.now().year;
+      int maxIndex = 0;
+      final regex = RegExp(r'MRN-\d{4}-(\d+)', caseSensitive: false);
+      for (final p in allPatients) {
+        final match = regex.firstMatch(p.medicalRecordNumber);
+        if (match != null) {
+          final val = int.tryParse(match.group(1) ?? '0') ?? 0;
+          if (val > maxIndex) maxIndex = val;
+        }
+      }
+      int candidateIndex = maxIndex + 1;
+      if (candidateIndex <= allPatients.length) {
+        candidateIndex = allPatients.length + 1;
+      }
+      String candidate =
+          'MRN-$year-${candidateIndex.toString().padLeft(4, '0')}';
+
+      while (allPatients.any(
+        (p) =>
+            p.medicalRecordNumber.trim().toUpperCase() ==
+            candidate.toUpperCase(),
+      )) {
+        candidateIndex++;
+        candidate = 'MRN-$year-${candidateIndex.toString().padLeft(4, '0')}';
+      }
+
+      if (mounted) {
+        setState(() {
+          _mrnController.text = candidate;
+        });
+      }
+    } catch (_) {}
   }
 
   // Calculate patient age from birth date
@@ -115,30 +158,34 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
       return;
     }
 
-    if (widget.existingPatients.any(
-      (p) => p.medicalRecordNumber.trim().toUpperCase() == mrn.toUpperCase(),
-    )) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Medical Record Number already exists. Regenerating...',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      setState(() {
-        _mrnController.text = _generateUniqueMRN();
-      });
-      return;
-    }
-
     setState(() => _isSaving = true);
+
+    // Live SQLite Duplicate Check (Skip check if editing same patient and MRN didn't change)
+    if (!isEditing || mrn.toLowerCase() != widget.initialPatient!.medicalRecordNumber.toLowerCase()) {
+      final existingInDb = await widget.repository.patientRepo
+          .getByMedicalRecordNumber(mrn);
+      if (existingInDb != null && (!isEditing || existingInDb.patientId != widget.initialPatient!.patientId)) {
+        await _loadDbMRN();
+        if (mounted) {
+          setState(() => _isSaving = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'MRN $mrn already exists in database. A new unique MRN (${_mrnController.text}) was generated.',
+              ),
+              backgroundColor: Colors.orange.shade800,
+            ),
+          );
+        }
+        return;
+      }
+    }
 
     try {
       const uuid = Uuid();
       final calculatedAge = _calculateAge(_dob);
-      final newPatient = PatientModel(
-        patientId: uuid.v4(),
+      final patientToSave = PatientModel(
+        patientId: widget.initialPatient?.patientId ?? uuid.v4(),
         medicalRecordNumber: mrn,
         demographics: {
           'name': name,
@@ -150,15 +197,19 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
           'notes': _notesController.text.trim(),
           'phone': _phoneController.text.trim(),
         },
-        createdAt: DateTime.now(),
+        createdAt: widget.initialPatient?.createdAt ?? DateTime.now(),
       );
 
-      await widget.repository.insertPatient(newPatient);
+      if (isEditing) {
+        await widget.repository.updatePatient(patientToSave);
+      } else {
+        await widget.repository.insertPatient(patientToSave);
+      }
 
       if (mounted) {
-        Navigator.pop(context, newPatient);
+        Navigator.pop(context, patientToSave);
         if (widget.onPatientAdded != null) {
-          await widget.onPatientAdded!(newPatient);
+          await widget.onPatientAdded!(patientToSave);
         }
       }
     } catch (e) {
@@ -206,15 +257,15 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
       title: Row(
         children: [
           Icon(
-            Icons.person_add_alt_1_rounded,
+            isEditing ? Icons.edit_note_rounded : Icons.person_add_alt_1_rounded,
             color: colorScheme.primary,
             size: 20,
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Add New Patient',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              isEditing ? 'Edit Patient Details' : 'Add New Patient',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           if (isUltraCompact) ...[
@@ -307,9 +358,7 @@ class _AddPatientDialogState extends State<AddPatientDialog> {
                           color: colorScheme.primary,
                         ),
                         onPressed: () {
-                          setState(() {
-                            _mrnController.text = _generateUniqueMRN();
-                          });
+                          _loadDbMRN();
                         },
                       ),
                     ),

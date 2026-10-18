@@ -41,6 +41,8 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
     final podController = TextEditingController(text: '1');
     final gradeController = TextEditingController(text: 'Clavien-Dindo Grade I');
     final mgmtController = TextEditingController();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     showDialog(
       context: context,
@@ -87,6 +89,10 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+              ),
               onPressed: () {
                 final pod = int.tryParse(podController.text) ?? 1;
                 provider.addComplicationToCase(
@@ -100,7 +106,6 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                   const SnackBar(content: Text('Complication logged into SQLite database.')),
                 );
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.alertAmber, foregroundColor: Colors.black),
               child: const Text('Save Complication'),
             ),
           ],
@@ -112,6 +117,8 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
   void _showAddLabDialog(BuildContext context, ResearchProvider provider) {
     final testNameController = TextEditingController();
     final resultController = TextEditingController();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     showDialog(
       context: context,
@@ -148,7 +155,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                   );
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryTeal, foregroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(backgroundColor: colorScheme.primary, foregroundColor: colorScheme.onPrimary),
               child: const Text('Add Lab Result'),
             ),
           ],
@@ -160,17 +167,25 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final cardBg = theme.cardTheme.color ?? colorScheme.surface;
+    final surfaceBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
+
     final patient = widget.clinicalCase.patient;
     final operation = widget.clinicalCase.operation;
     final formattedDate = DateFormat('MMMM dd, yyyy').format(operation.createdAt);
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkCard : Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+          color: borderColor,
           width: 1,
         ),
       ),
@@ -181,11 +196,11 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+              color: surfaceBg,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(19)),
               border: Border(
                 bottom: BorderSide(
-                  color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                  color: borderColor,
                 ),
               ),
             ),
@@ -197,7 +212,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryCyan.withValues(alpha: 0.15),
+                        color: primaryColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -205,7 +220,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                         style: GoogleFonts.robotoMono(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryCyan,
+                          color: primaryColor,
                         ),
                       ),
                     ),
@@ -237,7 +252,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                               TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
                               ElevatedButton(
                                 onPressed: () => Navigator.pop(ctx, true),
-                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.alertRed),
+                                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.alertRed, foregroundColor: Colors.white),
                                 child: const Text('Delete'),
                               ),
                             ],
@@ -275,14 +290,14 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                         style: GoogleFonts.inter(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                          color: textPrimary,
                         ),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppTheme.accentIndigo.withValues(alpha: 0.15),
+                        color: colorScheme.secondary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -290,7 +305,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.accentIndigo,
+                          color: colorScheme.secondary,
                         ),
                       ),
                     ),
@@ -313,7 +328,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                           'Age: ${patient.age} yrs • Gender: ${patient.gender}$countryStr$bloodStr • Phone: ${patient.phone}',
                           style: GoogleFonts.inter(
                             fontSize: 12.5,
-                            color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                            color: textSecondary,
                           ),
                         ),
                         if (patient.notes.isNotEmpty) ...[
@@ -323,7 +338,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontStyle: FontStyle.italic,
-                              color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                              color: textSecondary,
                             ),
                           ),
                         ],
@@ -335,9 +350,9 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+                    color: surfaceBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+                    border: Border.all(color: borderColor),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +362,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                         style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryCyan,
+                          color: primaryColor,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -356,7 +371,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -364,17 +379,17 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                         operation.diagnosisDetails,
                         style: GoogleFonts.inter(
                           fontSize: 12.5,
-                          color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                          color: textSecondary,
                         ),
                       ),
                       if (operation.hospital.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.local_hospital_rounded,
                               size: 13,
-                              color: AppTheme.primaryTeal,
+                              color: primaryColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -382,7 +397,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryTeal,
+                                color: primaryColor,
                               ),
                             ),
                           ],
@@ -400,9 +415,9 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
             controller: _tabController,
             isScrollable: true,
             tabAlignment: TabAlignment.start,
-            indicatorColor: AppTheme.primaryCyan,
-            labelColor: AppTheme.primaryCyan,
-            unselectedLabelColor: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+            indicatorColor: primaryColor,
+            labelColor: primaryColor,
+            unselectedLabelColor: textSecondary,
             labelStyle: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700),
             tabs: [
               const Tab(text: '1. Pre-Op'),
@@ -419,12 +434,12 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildPreOpTab(context, widget.clinicalCase.preOp, isDark),
-                _buildIntraOpTab(context, widget.clinicalCase.intraOp, isDark),
-                _buildPostOpTab(context, widget.clinicalCase.postOp, isDark),
-                _buildComplicationsTab(context, widget.clinicalCase.complications, provider, isDark),
-                _buildBloodLabsTab(context, widget.clinicalCase.bloodLabs, provider, isDark),
-                _buildSurveysTab(context, widget.clinicalCase.surveys, isDark),
+                _buildPreOpTab(context, widget.clinicalCase.preOp),
+                _buildIntraOpTab(context, widget.clinicalCase.intraOp),
+                _buildPostOpTab(context, widget.clinicalCase.postOp),
+                _buildComplicationsTab(context, widget.clinicalCase.complications, provider),
+                _buildBloodLabsTab(context, widget.clinicalCase.bloodLabs, provider),
+                _buildSurveysTab(context, widget.clinicalCase.surveys),
               ],
             ),
           ),
@@ -433,33 +448,39 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
     );
   }
 
-  Widget _buildPreOpTab(BuildContext context, PreOpModel? preOp, bool isDark) {
+  Widget _buildPreOpTab(BuildContext context, PreOpModel? preOp) {
     if (preOp == null) {
       return const Center(child: Text('No pre-operative record available.'));
     }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final surfaceBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSubHeader('Clinical Case Presentation'),
+          _buildSubHeader('Clinical Case Presentation', primaryColor),
           const SizedBox(height: 6),
           Text(preOp.caseDescription, style: GoogleFonts.inter(fontSize: 13, height: 1.5)),
           const SizedBox(height: 18),
 
-          _buildSubHeader('Radiology Reports (Text)'),
+          _buildSubHeader('Radiology Reports (Text)', primaryColor),
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+              color: surfaceBg,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(preOp.radiologyReports, style: GoogleFonts.inter(fontSize: 12.5, height: 1.4)),
           ),
           const SizedBox(height: 18),
 
-          _buildSubHeader('Clinical & Radiology Image Attachments'),
+          _buildSubHeader('Clinical & Radiology Image Attachments', primaryColor),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -469,14 +490,14 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                 width: 130,
                 height: 90,
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+                  color: surfaceBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.image_outlined, color: AppTheme.primaryCyan, size: 28),
+                    Icon(Icons.image_outlined, color: primaryColor, size: 28),
                     const SizedBox(height: 4),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -497,21 +518,27 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
     );
   }
 
-  Widget _buildIntraOpTab(BuildContext context, IntraOpModel? intraOp, bool isDark) {
+  Widget _buildIntraOpTab(BuildContext context, IntraOpModel? intraOp) {
     if (intraOp == null) {
       return const Center(child: Text('No intra-operative record available.'));
     }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final surfaceBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSubHeader('Operative Surgical Procedure Description'),
+          _buildSubHeader('Operative Surgical Procedure Description', primaryColor),
           const SizedBox(height: 6),
           Text(intraOp.operationDescription, style: GoogleFonts.inter(fontSize: 13, height: 1.5)),
           const SizedBox(height: 18),
 
-          _buildSubHeader('Intra-Operative Surgical Field Photos'),
+          _buildSubHeader('Intra-Operative Surgical Field Photos', primaryColor),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -521,14 +548,14 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                 width: 140,
                 height: 95,
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+                  color: surfaceBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.camera_alt_outlined, color: AppTheme.accentPurple, size: 28),
+                    Icon(Icons.camera_alt_outlined, color: colorScheme.secondary, size: 28),
                     const SizedBox(height: 4),
                     Text(
                       img.split('/').last,
@@ -546,21 +573,27 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
     );
   }
 
-  Widget _buildPostOpTab(BuildContext context, PostOpModel? postOp, bool isDark) {
+  Widget _buildPostOpTab(BuildContext context, PostOpModel? postOp) {
     if (postOp == null) {
       return const Center(child: Text('No post-operative record available.'));
     }
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final surfaceBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSubHeader('Post-Operative Progress & Clinical Evolution'),
+          _buildSubHeader('Post-Operative Progress & Clinical Evolution', primaryColor),
           const SizedBox(height: 6),
           Text(postOp.postOpDescription, style: GoogleFonts.inter(fontSize: 13, height: 1.5)),
           const SizedBox(height: 18),
 
-          _buildSubHeader('Post-Op Wound & Recovery Photos'),
+          _buildSubHeader('Post-Op Wound & Recovery Photos', primaryColor),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -570,14 +603,14 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                 width: 140,
                 height: 95,
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+                  color: surfaceBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.healing_outlined, color: AppTheme.primaryTeal, size: 28),
+                    Icon(Icons.healing_outlined, color: primaryColor, size: 28),
                     const SizedBox(height: 4),
                     Text(
                       img.split('/').last,
@@ -599,8 +632,14 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
     BuildContext context,
     List<ComplicationModel> complications,
     ResearchProvider provider,
-    bool isDark,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final surfaceBg = theme.scaffoldBackgroundColor;
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -609,7 +648,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildSubHeader('Complications Registry by Post-Op Day (POD)'),
+              _buildSubHeader('Complications Registry by Post-Op Day (POD)', primaryColor),
               ElevatedButton.icon(
                 onPressed: () => _showAddComplicationDialog(context, provider),
                 icon: const Icon(Icons.add_rounded, size: 16),
@@ -628,17 +667,17 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primaryTeal.withValues(alpha: 0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded, color: AppTheme.primaryTeal, size: 24),
+                  Icon(Icons.check_circle_rounded, color: primaryColor, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'No surgical or medical complications recorded for this procedure.',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppTheme.primaryTeal),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: primaryColor),
                     ),
                   ),
                 ],
@@ -650,7 +689,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+                  color: surfaceBg,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.alertAmber.withValues(alpha: 0.3)),
                 ),
@@ -680,7 +719,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                           style: GoogleFonts.inter(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                            color: textPrimary,
                           ),
                         ),
                       ],
@@ -690,7 +729,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                       'Management: ${c.management}',
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                        color: textSecondary,
                       ),
                     ),
                   ],
@@ -706,8 +745,13 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
     BuildContext context,
     List<BloodLabModel> bloodLabs,
     ResearchProvider provider,
-    bool isDark,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final surfaceBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -716,14 +760,14 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildSubHeader('Serial Blood & Lab Biomarkers (Digital Readings)'),
+              _buildSubHeader('Serial Blood & Lab Biomarkers (Digital Readings)', primaryColor),
               ElevatedButton.icon(
                 onPressed: () => _showAddLabDialog(context, provider),
                 icon: const Icon(Icons.add_rounded, size: 16),
                 label: const Text('Add Lab Result'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryTeal,
-                  foregroundColor: Colors.black,
+                  backgroundColor: primaryColor,
+                  foregroundColor: colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
@@ -735,7 +779,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
             const Text('No digital lab results recorded yet.')
           else
             Table(
-              border: TableBorder.all(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder, borderRadius: BorderRadius.circular(8)),
+              border: TableBorder.all(color: borderColor, borderRadius: BorderRadius.circular(8)),
               columnWidths: const {
                 0: FlexColumnWidth(2),
                 1: FlexColumnWidth(2),
@@ -743,7 +787,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
               },
               children: [
                 TableRow(
-                  decoration: BoxDecoration(color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground),
+                  decoration: BoxDecoration(color: surfaceBg),
                   children: [
                     Padding(padding: const EdgeInsets.all(10), child: Text('TEST NAME', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700))),
                     Padding(padding: const EdgeInsets.all(10), child: Text('RESULT VALUE', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700))),
@@ -754,7 +798,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                   return TableRow(
                     children: [
                       Padding(padding: const EdgeInsets.all(10), child: Text(lab.testName, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600))),
-                      Padding(padding: const EdgeInsets.all(10), child: Text(lab.resultValue, style: GoogleFonts.inter(fontSize: 12.5, color: AppTheme.primaryCyan, fontWeight: FontWeight.w700))),
+                      Padding(padding: const EdgeInsets.all(10), child: Text(lab.resultValue, style: GoogleFonts.inter(fontSize: 12.5, color: primaryColor, fontWeight: FontWeight.w700))),
                       Padding(padding: const EdgeInsets.all(10), child: Text(DateFormat('MM/dd').format(lab.testDate), style: GoogleFonts.inter(fontSize: 12))),
                     ],
                   );
@@ -766,13 +810,20 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
     );
   }
 
-  Widget _buildSurveysTab(BuildContext context, List<SurveyModel> surveys, bool isDark) {
+  Widget _buildSurveysTab(BuildContext context, List<SurveyModel> surveys) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final surfaceBg = theme.scaffoldBackgroundColor;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSubHeader('Patient Evaluation Surveys & Outcome Measures'),
+          _buildSubHeader('Patient Evaluation Surveys & Outcome Measures', primaryColor),
           const SizedBox(height: 14),
 
           if (surveys.isEmpty)
@@ -783,20 +834,20 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                 margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
+                  color: surfaceBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.assignment_turned_in_rounded, size: 18, color: AppTheme.accentIndigo),
+                        Icon(Icons.assignment_turned_in_rounded, size: 18, color: colorScheme.secondary),
                         const SizedBox(width: 8),
                         Text(
                           s.surveyType,
-                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.accentIndigo),
+                          style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: colorScheme.secondary),
                         ),
                       ],
                     ),
@@ -811,7 +862,7 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
                             Expanded(
                               child: Text(
                                 e.value.toString(),
-                                style: GoogleFonts.inter(fontSize: 12.5, color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+                                style: GoogleFonts.inter(fontSize: 12.5, color: textSecondary),
                               ),
                             ),
                           ],
@@ -827,10 +878,10 @@ class _ClinicalCaseDetailViewState extends State<ClinicalCaseDetailView> with Si
     );
   }
 
-  Widget _buildSubHeader(String title) {
+  Widget _buildSubHeader(String title, Color color) {
     return Text(
       title,
-      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.primaryCyan),
+      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w800, color: color),
     );
   }
 }

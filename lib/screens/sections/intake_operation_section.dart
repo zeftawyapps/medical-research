@@ -182,7 +182,7 @@ class _IntakeOperationSectionState extends State<IntakeOperationSection> {
             controller: widget.hospitalController,
             scrollPadding: ResponsiveLayout.textFieldScrollPadding(context),
             decoration: const InputDecoration(
-              labelText: 'Hospital / Facility (المستشفى) (Optional)',
+              labelText: 'Hospital / Facility (Optional)',
               hintText: 'e.g. Royal Surgery Center, King Faisal Hospital...',
               prefixIcon: Icon(Icons.local_hospital_outlined, size: 18),
             ),

@@ -1,22 +1,56 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/patient_record_brd.dart';
+import '../services/backup/clinical_backup_service.dart';
 import '../services/database/clinical_repository.dart';
 import '../services/database/mock_data_service.dart';
+import '../services/export/clinical_export_service.dart';
+import '../services/import/clinical_import_service.dart';
 import '../services/search_engine/research_search_engine.dart';
+import '../theme/app_theme.dart';
 
 class ResearchProvider extends ChangeNotifier {
   final ClinicalRepository _repository = ClinicalRepository();
   final Uuid _uuid = const Uuid();
 
-  // Theme Mode
+  // Theme & Palette State
   ThemeMode _themeMode = ThemeMode.dark;
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
 
-  void toggleTheme() {
+  AppThemePalette _selectedPalette = AppThemePalette.medicalTeal;
+  AppThemePalette get selectedPalette => _selectedPalette;
+  PaletteConfig get currentPaletteConfig =>
+      AppTheme.palettes[_selectedPalette] ??
+      AppTheme.palettes[AppThemePalette.medicalTeal]!;
+
+  void toggleTheme() async {
     _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_dark_mode', isDarkMode);
+    } catch (_) {}
+  }
+
+  void setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_dark_mode', mode == ThemeMode.dark);
+    } catch (_) {}
+  }
+
+  void setThemePalette(AppThemePalette palette) async {
+    _selectedPalette = palette;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selected_palette', palette.name);
+    } catch (_) {}
   }
 
   // Active Navigation
@@ -26,6 +60,71 @@ class ResearchProvider extends ChangeNotifier {
   void setNavIndex(int index) {
     _currentNavIndex = index;
     notifyListeners();
+  }
+
+  // Clinical Query Tab Preference (0: Analytics Dashboard, 1: Cohort Search & Cases)
+  int _clinicalQueryTabIndex = 0;
+  int get clinicalQueryTabIndex => _clinicalQueryTabIndex;
+
+  void setClinicalQueryTabIndex(int index) async {
+    if (index < 0 || index > 1) return;
+    _clinicalQueryTabIndex = index;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('clinical_query_last_tab_index', index);
+    } catch (_) {}
+  }
+
+  // Export & Backup Paths Preferences
+  String _customExportDirectory = '';
+  String get customExportDirectory => _customExportDirectory;
+
+  String _customBackupDirectory = '';
+  String get customBackupDirectory => _customBackupDirectory;
+
+  Future<void> setCustomExportDirectory(String path) async {
+    _customExportDirectory = path.trim();
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_customExportDirectory.isEmpty) {
+        await prefs.remove(ClinicalExportService.prefExportDirectoryKey);
+      } else {
+        await prefs.setString(
+            ClinicalExportService.prefExportDirectoryKey, _customExportDirectory);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> resetExportDirectory() async {
+    await setCustomExportDirectory('');
+  }
+
+  Future<void> setCustomBackupDirectory(String path) async {
+    _customBackupDirectory = path.trim();
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_customBackupDirectory.isEmpty) {
+        await prefs.remove(ClinicalBackupService.prefBackupDirectoryKey);
+      } else {
+        await prefs.setString(
+            ClinicalBackupService.prefBackupDirectoryKey, _customBackupDirectory);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> resetBackupDirectory() async {
+    await setCustomBackupDirectory('');
+  }
+
+  Future<BackupResult> createDatabaseBackup({String? customPath}) async {
+    return await ClinicalBackupService.createDatabaseBackup(
+      repository: _repository,
+      customDirectoryPath: customPath ??
+          (_customBackupDirectory.isNotEmpty ? _customBackupDirectory : null),
+    );
   }
 
   // --- SQLite Separate CRUD Entities ---
@@ -99,6 +198,35 @@ class ResearchProvider extends ChangeNotifier {
   Future<void> _initData() async {
     _isLoadingDatabase = true;
     notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final isDark = prefs.getBool('is_dark_mode') ?? true;
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+
+      final paletteName = prefs.getString('selected_palette');
+      if (paletteName != null) {
+        _selectedPalette = AppThemePalette.values.firstWhere(
+          (p) => p.name == paletteName,
+          orElse: () => AppThemePalette.medicalTeal,
+        );
+      }
+
+      final savedQueryTab = prefs.getInt('clinical_query_last_tab_index');
+      if (savedQueryTab != null && savedQueryTab >= 0 && savedQueryTab <= 1) {
+        _clinicalQueryTabIndex = savedQueryTab;
+      }
+
+      final savedExportPath = prefs.getString(ClinicalExportService.prefExportDirectoryKey);
+      if (savedExportPath != null) {
+        _customExportDirectory = savedExportPath;
+      }
+
+      final savedBackupPath = prefs.getString(ClinicalBackupService.prefBackupDirectoryKey);
+      if (savedBackupPath != null) {
+        _customBackupDirectory = savedBackupPath;
+      }
+    } catch (_) {}
 
     try {
       await reloadAllData();
@@ -633,4 +761,27 @@ class ResearchProvider extends ChangeNotifier {
     await _repository.deleteCase(c.operation.operationId, c.patient.patientId);
     await reloadAllData();
   }
+
+  /// Imports external clinical data from Excel (.xlsx), CSV (.csv), or JSON backup files
+  Future<ImportResult> importClinicalDataFromFile(
+    File file, {
+    bool skipDuplicateMrn = true,
+  }) async {
+    _isLoadingDatabase = true;
+    notifyListeners();
+
+    try {
+      final result = await ClinicalImportService.importFromFile(
+        file,
+        repository: _repository,
+        skipDuplicateMrn: skipDuplicateMrn,
+      );
+      await reloadAllData();
+      return result;
+    } finally {
+      _isLoadingDatabase = false;
+      notifyListeners();
+    }
+  }
 }
+

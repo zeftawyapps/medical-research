@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/garment_preferences_service.dart';
-import '../theme/app_theme.dart';
 import '../theme/responsive_layout.dart';
 
 /// Interactive conditional garment section widget
@@ -33,6 +32,14 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
+    final cardColor = theme.cardTheme.color ?? colorScheme.surface;
+    final borderColor = theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.25);
+    final textPrimary = colorScheme.onSurface;
+    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.65);
+
     final isTypeEmpty =
         showValidationErrors &&
         isRequired &&
@@ -44,12 +51,12 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.darkSurface : Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: (isTypeEmpty || isBrandEmpty)
-              ? Colors.red.shade400
-              : (isDark ? AppTheme.darkBorder : Colors.grey.shade300),
+              ? colorScheme.error
+              : borderColor,
           width: (isTypeEmpty || isBrandEmpty) ? 1.5 : 1.0,
         ),
       ),
@@ -69,13 +76,13 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
                       color: isRequired
-                          ? Colors.teal.withValues(alpha: 0.15)
-                          : Colors.grey.withValues(alpha: 0.12),
+                          ? primaryColor.withValues(alpha: 0.15)
+                          : textSecondary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.checkroom_rounded,
-                      color: isRequired ? Colors.teal : Colors.grey.shade600,
+                      color: isRequired ? primaryColor : textSecondary,
                       size: 20,
                     ),
                   ),
@@ -84,8 +91,8 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                     '4/ Compression Garment',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 10,
-                      color: isDark ? Colors.white : Colors.black87,
+                      fontSize: 12,
+                      color: textPrimary,
                     ),
                   ),
                 ],
@@ -99,17 +106,14 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
-                      color: isRequired
-                          ? Colors.teal
-                          : (isDark
-                                ? Colors.grey.shade400
-                                : Colors.grey.shade600),
+                      color: isRequired ? primaryColor : textSecondary,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Switch(
                     value: isRequired,
-                    activeThumbColor: Colors.teal,
+                    activeThumbColor: primaryColor,
+                    activeTrackColor: primaryColor.withValues(alpha: 0.35),
                     onChanged: onRequiredChanged,
                   ),
                 ],
@@ -180,7 +184,6 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                                         focusNode,
                                         onFieldSubmitted,
                                       ) {
-                                        // Sync initial text if needed
                                         if (textController.text !=
                                                 typeController.text &&
                                             typeController.text.isNotEmpty) {
@@ -204,9 +207,9 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                                               Icons.accessibility_new_rounded,
                                             ),
                                             suffixIcon: IconButton(
-                                              icon: const Icon(
+                                              icon: Icon(
                                                 Icons.add_circle_outline,
-                                                color: Colors.teal,
+                                                color: primaryColor,
                                                 size: 20,
                                               ),
                                               tooltip:
@@ -247,7 +250,6 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                                         focusNode,
                                         onFieldSubmitted,
                                       ) {
-                                        // Sync initial text if needed
                                         if (textController.text !=
                                                 brandModelController.text &&
                                             brandModelController
@@ -274,9 +276,9 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                                               Icons.verified_outlined,
                                             ),
                                             suffixIcon: IconButton(
-                                              icon: const Icon(
+                                              icon: Icon(
                                                 Icons.add_circle_outline,
-                                                color: Colors.teal,
+                                                color: primaryColor,
                                                 size: 20,
                                               ),
                                               tooltip:
@@ -305,22 +307,22 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                         children: [
                           OutlinedButton.icon(
                             onPressed: () => _showAddTypeDialog(context),
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.add_rounded,
                               size: 16,
-                              color: Colors.teal,
+                              color: primaryColor,
                             ),
-                            label: const Text(
+                            label: Text(
                               '+ Add New Type',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.teal,
+                                color: primaryColor,
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: Colors.teal.withValues(alpha: 0.5),
+                                color: primaryColor.withValues(alpha: 0.5),
                               ),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -333,22 +335,22 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                           ),
                           OutlinedButton.icon(
                             onPressed: () => _showAddBrandDialog(context),
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.add_rounded,
                               size: 16,
-                              color: Colors.teal,
+                              color: primaryColor,
                             ),
-                            label: const Text(
+                            label: Text(
                               '+ Add New Brand / Model',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.teal,
+                                color: primaryColor,
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: Colors.teal.withValues(alpha: 0.5),
+                                color: primaryColor.withValues(alpha: 0.5),
                               ),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -367,9 +369,7 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10.5,
                           fontStyle: FontStyle.italic,
-                          color: isDark
-                              ? AppTheme.darkTextSecondary
-                              : Colors.grey.shade600,
+                          color: textSecondary,
                         ),
                       ),
                     ],
@@ -383,14 +383,15 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
 
   Future<void> _showAddTypeDialog(BuildContext context) async {
     final textController = TextEditingController();
+    final primaryColor = Theme.of(context).colorScheme.primary;
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.add_circle_outline, color: Colors.teal),
-            SizedBox(width: 8),
-            Text(
+            Icon(Icons.add_circle_outline, color: primaryColor),
+            const SizedBox(width: 8),
+            const Text(
               'Add Garment Type',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -423,7 +424,7 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
+              backgroundColor: primaryColor,
               foregroundColor: Colors.white,
             ),
             onPressed: () {
@@ -447,7 +448,7 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
           SnackBar(
             content: Text('Added "$result" to saved garment types!'),
             duration: const Duration(milliseconds: 1500),
-            backgroundColor: Colors.teal,
+            backgroundColor: primaryColor,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -457,14 +458,15 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
 
   Future<void> _showAddBrandDialog(BuildContext context) async {
     final textController = TextEditingController();
+    final primaryColor = Theme.of(context).colorScheme.primary;
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.add_circle_outline, color: Colors.teal),
-            SizedBox(width: 8),
-            Text(
+            Icon(Icons.add_circle_outline, color: primaryColor),
+            const SizedBox(width: 8),
+            const Text(
               'Add Garment Brand / Model',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -497,7 +499,7 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.teal,
+              backgroundColor: primaryColor,
               foregroundColor: Colors.white,
             ),
             onPressed: () {
@@ -520,7 +522,7 @@ class ConditionalGarmentSectionWidget extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Added "$result" to saved brands!'),
-            backgroundColor: Colors.teal,
+            backgroundColor: primaryColor,
             behavior: SnackBarBehavior.floating,
           ),
         );

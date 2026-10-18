@@ -17,8 +17,15 @@ import 'universal_search_screen.dart';
 import 'research_abstracts_screen.dart';
 import 'case_intake_form_screen.dart';
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  bool? _isRailExpandedOverride;
 
   static const List<Widget> _screens = [
     DashboardScreen(),
@@ -51,26 +58,28 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ResearchProvider>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isMobile = ResponsiveLayout.isMobile(context);
+    final isWide = ResponsiveLayout.isWideDesktop(context);
+    final isRailExpanded = _isRailExpandedOverride ?? isWide;
 
     return Scaffold(
       drawer: _buildAppDrawer(context, provider, isDark),
       appBar: AppBar(
-        toolbarHeight: isMobile ? 56 : 70,
-        backgroundColor: isDark
-            ? AppTheme.darkBackground
-            : AppTheme.lightBackground,
+        toolbarHeight: isMobile ? 56 : 64,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: !isDesktop
             ? Builder(
                 builder: (ctx) => IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.menu_rounded,
                     size: 24,
-                    color: AppTheme.primaryCyan,
+                    color: colorScheme.primary,
                   ),
                   tooltip: 'Open Menu',
                   onPressed: () => Scaffold.of(ctx).openDrawer(),
@@ -90,7 +99,7 @@ class MainScreen extends StatelessWidget {
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.1,
-                      color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -101,7 +110,7 @@ class MainScreen extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryCyan.withValues(alpha: 0.15),
+                        color: colorScheme.primary.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -112,7 +121,7 @@ class MainScreen extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: AppTheme.primaryCyan,
+                          color: colorScheme.primary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -126,19 +135,21 @@ class MainScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      gradient: AppTheme.primaryGradient,
+                      gradient: LinearGradient(
+                        colors: [colorScheme.primary, colorScheme.secondary],
+                      ),
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryCyan.withValues(alpha: 0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.biotech_rounded,
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                       size: 20,
                     ),
                   ),
@@ -157,9 +168,7 @@ class MainScreen extends StatelessWidget {
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                                 letterSpacing: 1.2,
-                                color: isDark
-                                    ? Colors.white
-                                    : AppTheme.lightTextPrimary,
+                                color: colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(width: 4),
@@ -169,7 +178,7 @@ class MainScreen extends StatelessWidget {
                                 fontSize: 16,
                                 fontWeight: FontWeight.w400,
                                 letterSpacing: 1.2,
-                                color: AppTheme.primaryCyan,
+                                color: colorScheme.primary,
                               ),
                             ),
                           ],
@@ -179,9 +188,7 @@ class MainScreen extends StatelessWidget {
                           style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w500,
-                            color: isDark
-                                ? AppTheme.darkTextSecondary
-                                : AppTheme.lightTextSecondary,
+                            color: colorScheme.onSurface.withValues(alpha: 0.65),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -205,8 +212,8 @@ class MainScreen extends StatelessWidget {
               icon: const Icon(Icons.flash_on_rounded, size: 15),
               label: const Text('Quick Multi-Phase Intake'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryCyan,
-                foregroundColor: Colors.black,
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
@@ -222,7 +229,7 @@ class MainScreen extends StatelessWidget {
               provider.isDarkMode
                   ? Icons.light_mode_rounded
                   : Icons.dark_mode_rounded,
-              color: isDark ? AppTheme.alertAmber : AppTheme.lightTextSecondary,
+              color: isDark ? AppTheme.alertAmber : colorScheme.onSurface.withValues(alpha: 0.7),
               size: 20,
             ),
             tooltip: provider.isDarkMode
@@ -240,15 +247,14 @@ class MainScreen extends StatelessWidget {
         top: false,
         child: Row(
           children: [
-            // Left Sidebar for Desktop & Web
+            // Left Collapsible Sidebar for Desktop & Tablet
             if (isDesktop)
               Container(
                 decoration: BoxDecoration(
                   border: Border(
                     right: BorderSide(
-                      color: isDark
-                          ? AppTheme.darkBorder
-                          : AppTheme.lightBorder,
+                      color: theme.dividerTheme.color ??
+                          colorScheme.outline.withValues(alpha: 0.2),
                       width: 1,
                     ),
                   ),
@@ -259,9 +265,25 @@ class MainScreen extends StatelessWidget {
                     _screens.length - 1,
                   ),
                   onDestinationSelected: (index) => provider.setNavIndex(index),
-                  extended: ResponsiveLayout.isWideDesktop(context),
+                  extended: isRailExpanded,
                   minExtendedWidth: 230,
                   minWidth: 70,
+                  leading: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: IconButton(
+                      icon: Icon(
+                        isRailExpanded ? Icons.menu_open_rounded : Icons.menu_rounded,
+                        color: colorScheme.primary,
+                        size: 22,
+                      ),
+                      tooltip: isRailExpanded ? 'Collapse Sidebar' : 'Expand Sidebar',
+                      onPressed: () {
+                        setState(() {
+                          _isRailExpandedOverride = !isRailExpanded;
+                        });
+                      },
+                    ),
+                  ),
                   destinations: const [
                     NavigationRailDestination(
                       icon: Icon(Icons.dashboard_outlined),
@@ -340,10 +362,11 @@ class MainScreen extends StatelessWidget {
     ResearchProvider provider,
     bool isDark,
   ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Drawer(
-      backgroundColor: isDark
-          ? AppTheme.darkBackground
-          : AppTheme.lightBackground,
+      backgroundColor: theme.scaffoldBackgroundColor,
       child: SafeArea(
         child: Column(
           children: [
@@ -351,8 +374,10 @@ class MainScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0B192C), Color(0xFF1E3E62)],
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [colorScheme.primary.withValues(alpha: 0.28), theme.scaffoldBackgroundColor]
+                      : [colorScheme.primary.withValues(alpha: 0.15), colorScheme.surface],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -365,15 +390,15 @@ class MainScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryCyan.withValues(alpha: 0.2),
+                      color: colorScheme.primary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppTheme.primaryCyan.withValues(alpha: 0.4),
+                        color: colorScheme.primary.withValues(alpha: 0.4),
                       ),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.biotech_rounded,
-                      color: AppTheme.primaryCyan,
+                      color: colorScheme.primary,
                       size: 26,
                     ),
                   ),
@@ -388,7 +413,7 @@ class MainScreen extends StatelessWidget {
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
                             letterSpacing: 1.2,
-                            color: Colors.white,
+                            color: isDark ? Colors.white : colorScheme.onSurface,
                           ),
                         ),
                         Text(
@@ -397,7 +422,7 @@ class MainScreen extends StatelessWidget {
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.1,
-                            color: AppTheme.primaryCyan,
+                            color: colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -405,7 +430,9 @@ class MainScreen extends StatelessWidget {
                           'SQLite Local Storage Registry',
                           style: GoogleFonts.inter(
                             fontSize: 10,
-                            color: Colors.white.withValues(alpha: 0.7),
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.7)
+                                : colorScheme.onSurface.withValues(alpha: 0.65),
                           ),
                         ),
                       ],
@@ -433,7 +460,7 @@ class MainScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 10),
-                  _buildDrawerSectionHeader('CLINICAL CRUD SECTIONS', isDark),
+                  _buildDrawerSectionHeader(context, 'CLINICAL CRUD SECTIONS', isDark),
 
                   _buildDrawerTile(
                     context,
@@ -509,7 +536,7 @@ class MainScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 10),
-                  _buildDrawerSectionHeader('SEARCH & RESEARCH', isDark),
+                  _buildDrawerSectionHeader(context, 'SEARCH & RESEARCH', isDark),
 
                   _buildDrawerTile(
                     context,
@@ -530,15 +557,15 @@ class MainScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 10),
-                  _buildDrawerSectionHeader('DATABASE CONTROLS', isDark),
+                  _buildDrawerSectionHeader(context, 'DATABASE CONTROLS', isDark),
 
                   ListTile(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    leading: const Icon(
+                    leading: Icon(
                       Icons.download_rounded,
-                      color: AppTheme.primaryCyan,
+                      color: colorScheme.primary,
                       size: 20,
                     ),
                     title: Text(
@@ -546,7 +573,7 @@ class MainScreen extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryCyan,
+                        color: colorScheme.primary,
                       ),
                     ),
                     subtitle: Text(
@@ -632,17 +659,17 @@ class MainScreen extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    tileColor: AppTheme.primaryCyan.withValues(alpha: 0.12),
-                    leading: const Icon(
+                    tileColor: colorScheme.primary.withValues(alpha: 0.12),
+                    leading: Icon(
                       Icons.flash_on_rounded,
-                      color: AppTheme.primaryCyan,
+                      color: colorScheme.primary,
                     ),
                     title: Text(
                       'Quick Multi-Phase Intake',
                       style: GoogleFonts.inter(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: AppTheme.primaryCyan,
+                        color: colorScheme.primary,
                       ),
                     ),
                     subtitle: Text(
@@ -669,7 +696,8 @@ class MainScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                    color: theme.dividerTheme.color ??
+                        colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -678,10 +706,10 @@ class MainScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.storage_rounded,
                         size: 14,
-                        color: AppTheme.primaryCyan,
+                        color: colorScheme.primary,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -689,7 +717,7 @@ class MainScreen extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.primaryCyan,
+                          color: colorScheme.primary,
                         ),
                       ),
                     ],
@@ -702,7 +730,7 @@ class MainScreen extends StatelessWidget {
                       size: 18,
                       color: isDark
                           ? AppTheme.alertAmber
-                          : AppTheme.lightTextSecondary,
+                          : colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                     onPressed: () => provider.toggleTheme(),
                   ),
@@ -715,7 +743,8 @@ class MainScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawerSectionHeader(String title, bool isDark) {
+  Widget _buildDrawerSectionHeader(BuildContext context, String title, bool isDark) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Text(
@@ -724,9 +753,7 @@ class MainScreen extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 1.1,
-          color: isDark
-              ? AppTheme.darkTextSecondary
-              : AppTheme.lightTextSecondary,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
         ),
       ),
     );
@@ -741,6 +768,8 @@ class MainScreen extends StatelessWidget {
     bool isDark, {
     int? count,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isSelected = provider.currentNavIndex == index;
 
     return Padding(
@@ -748,14 +777,14 @@ class MainScreen extends StatelessWidget {
       child: ListTile(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         tileColor: isSelected
-            ? AppTheme.primaryCyan.withValues(alpha: 0.15)
+            ? colorScheme.primary.withValues(alpha: 0.15)
             : Colors.transparent,
         leading: Icon(
           icon,
           size: 20,
           color: isSelected
-              ? AppTheme.primaryCyan
-              : (isDark ? Colors.white70 : Colors.black87),
+              ? colorScheme.primary
+              : colorScheme.onSurface.withValues(alpha: 0.7),
         ),
         title: Text(
           title,
@@ -763,8 +792,8 @@ class MainScreen extends StatelessWidget {
             fontSize: 13.5,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected
-                ? AppTheme.primaryCyan
-                : (isDark ? Colors.white : AppTheme.lightTextPrimary),
+                ? colorScheme.primary
+                : colorScheme.onSurface,
           ),
         ),
         trailing: count != null
@@ -772,8 +801,8 @@ class MainScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppTheme.primaryCyan
-                      : (isDark ? AppTheme.darkSurface : AppTheme.lightBorder),
+                      ? colorScheme.primary
+                      : theme.dividerTheme.color ?? colorScheme.outline.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -782,8 +811,8 @@ class MainScreen extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: isSelected
-                        ? Colors.black
-                        : (isDark ? Colors.white70 : Colors.black87),
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurface,
                   ),
                 ),
               )

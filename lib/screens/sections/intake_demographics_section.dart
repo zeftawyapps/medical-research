@@ -38,7 +38,7 @@ class IntakeDemographicsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IntakeSectionCard(
-      title: '1. Patient Demographics & Identification (بيانات المريض)',
+      title: '1. Patient Demographics & Identification',
       icon: Icons.person_outline_rounded,
       isDark: isDark,
       children: [

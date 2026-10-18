@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
 
 class IntakeSubmitButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -13,6 +12,9 @@ class IntakeSubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
@@ -20,8 +22,8 @@ class IntakeSubmitButton extends StatelessWidget {
         icon: const Icon(Icons.save_rounded, size: 20),
         label: Text(label),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.primaryCyan,
-          foregroundColor: Colors.black,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
